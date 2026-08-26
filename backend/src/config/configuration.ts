@@ -88,6 +88,13 @@ export const configuration = () => {
       password: process.env.ADMIN_PASSWORD ?? null,
       fullName: process.env.ADMIN_FULL_NAME ?? null,
     },
+    access: {
+      /**
+       * Vigencia por defecto de una cuenta nueva, en meses. El alta puede
+       * fijar otra fecha, o `null` para que no venza nunca.
+       */
+      defaultMonths: positiveInt('ACCESS_DEFAULT_MONTHS', 12),
+    },
     activation: {
       /** Plazo para crear la contraseña desde que el asesor da el alta. */
       ttlHours: positiveInt('ACTIVATION_TTL_HOURS', 72),

@@ -155,26 +155,74 @@ export class UsersService {
    */
   createPending(
     dto: CreateUserDto,
-    activationTtlHours: number,
+    options: { activationTtlHours: number; defaultAccessMonths: number },
   ): Promise<UserDocument> {
+    return this.userModel.create(this.pendingDocument(dto, options));
+  }
+
+  /**
+   * Alta masiva. Cada fila se intenta por separado y las que fallan se
+   * devuelven con su motivo: un correo repetido en la fila 40 no puede
+   * tirar las otras 39 que sí estaban bien.
+   */
+  async createManyPending(
+    rows: CreateUserDto[],
+    options: { activationTtlHours: number; defaultAccessMonths: number },
+  ): Promise<{
+    created: number;
+    skipped: { email: string; reason: string }[];
+  }> {
+    const skipped: { email: string; reason: string }[] = [];
+    let created = 0;
+
+    for (const row of rows) {
+      try {
+        await this.userModel.create(this.pendingDocument(row, options));
+        created += 1;
+      } catch (error) {
+        const duplicate =
+          error instanceof Error && 'code' in error && error.code === 11000;
+        skipped.push({
+          email: row.email,
+          reason: duplicate
+            ? 'Ya existe una cuenta con ese correo.'
+            : 'No se pudo crear.',
+        });
+      }
+    }
+
+    return { created, skipped };
+  }
+
+  private pendingDocument(
+    dto: CreateUserDto,
+    options: { activationTtlHours: number; defaultAccessMonths: number },
+  ) {
     if (dto.accessExpiresAt && dto.accessExpiresAt.getTime() < Date.now()) {
       throw new BadRequestException(
         'La fecha de vencimiento del acceso ya pasó.',
       );
     }
 
-    return this.userModel.create({
+    // Sin fecha se aplica la vigencia por defecto. Para que no venza nunca
+    // hay que mandar `null` explícito: olvidarse no debe regalar acceso
+    // perpetuo sin que nadie lo haya decidido.
+    const expiry = new Date();
+    expiry.setMonth(expiry.getMonth() + options.defaultAccessMonths);
+
+    return {
       fullName: dto.fullName,
       email: dto.email.toLowerCase(),
       phone: dto.phone,
       role: dto.role,
-      accessExpiresAt: dto.accessExpiresAt ?? null,
+      accessExpiresAt:
+        dto.accessExpiresAt === undefined ? expiry : dto.accessExpiresAt,
       passwordHash: UNUSABLE_PASSWORD_HASH,
       status: UserStatus.PENDING_ACTIVATION,
       activationExpiresAt: new Date(
-        Date.now() + activationTtlHours * 3_600_000,
+        Date.now() + options.activationTtlHours * 3_600_000,
       ),
-    });
+    };
   }
 
   /**

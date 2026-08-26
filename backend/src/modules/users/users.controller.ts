@@ -20,6 +20,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import { BulkCreateUsersDto } from './dto/bulk-create-users.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { FindUsersQueryDto } from './dto/find-users-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -44,13 +45,22 @@ export class UsersController {
     private readonly config: ConfigService,
   ) {}
 
+  private get creationOptions() {
+    return {
+      activationTtlHours: this.config.getOrThrow<number>('activation.ttlHours'),
+      defaultAccessMonths: this.config.getOrThrow<number>(
+        'access.defaultMonths',
+      ),
+    };
+  }
+
   @Throttle(ADMIN_WRITE_THROTTLE)
   @Post()
   async create(@Body() dto: CreateUserDto) {
     try {
       const user = await this.usersService.createPending(
         dto,
-        this.config.getOrThrow<number>('activation.ttlHours'),
+        this.creationOptions,
       );
       return this.usersService.sanitize(user);
     } catch (error) {
@@ -59,6 +69,14 @@ export class UsersController {
       }
       throw error;
     }
+  }
+
+  /** Alta masiva desde un archivo. Las filas con error se informan. */
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(HttpStatus.OK)
+  @Post('bulk')
+  bulkCreate(@Body() dto: BulkCreateUsersDto) {
+    return this.usersService.createManyPending(dto.users, this.creationOptions);
   }
 
   @Get()
@@ -131,7 +149,7 @@ export class UsersController {
     }
     const user = await this.usersService.reopenActivation(
       id,
-      this.config.getOrThrow<number>('activation.ttlHours'),
+      this.creationOptions.activationTtlHours,
     );
     if (!user) throw new NotFoundException('No encontramos esa cuenta.');
     return this.usersService.sanitize(user);

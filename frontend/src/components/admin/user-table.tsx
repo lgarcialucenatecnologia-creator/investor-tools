@@ -1,31 +1,36 @@
 'use client';
 
-import { KeyRound, PauseCircle, PlayCircle, Trash2 } from 'lucide-react';
 import { StatusChip } from './status-chip';
 import type { AdminUser } from '@/lib/api/types';
 
 const fecha = new Intl.DateTimeFormat('es-CO', {
-  day: '2-digit',
+  day: 'numeric',
   month: 'short',
   year: 'numeric',
 });
 
-const format = (iso: string | null) =>
-  iso ? fecha.format(new Date(iso)) : '—';
+const format = (iso: string | null, empty = '—') =>
+  iso ? fecha.format(new Date(iso)) : empty;
+
+const ROLE_LABEL: Record<AdminUser['role'], string> = {
+  investor: 'Cliente',
+  advisor: 'Asesor',
+  admin: 'Administrador',
+};
 
 export function UserTable({
   users,
   currentUserId,
   busyId,
+  onEdit,
   onReset,
-  onToggle,
   onDelete,
 }: {
   users: AdminUser[];
   currentUserId: string;
   busyId: string | null;
+  onEdit: (user: AdminUser) => void;
   onReset: (user: AdminUser) => void;
-  onToggle: (user: AdminUser) => void;
   onDelete: (user: AdminUser) => void;
 }) {
   if (users.length === 0) {
@@ -37,19 +42,18 @@ export function UserTable({
   }
 
   return (
-    // La tabla desborda antes que la página: en un teléfono se desplaza
-    // dentro de su caja y el resto del panel no se mueve.
+    // La tabla desborda dentro de su caja: en un teléfono se desplaza ella,
+    // no la página entera.
     <div className="overflow-x-auto rounded-lg border border-grafito/20">
-      <table className="w-full min-w-[46rem] border-collapse text-sm">
+      <table className="w-full min-w-[54rem] border-collapse text-sm">
         <thead>
           <tr className="border-b border-grafito/20 bg-nocturno text-left">
-            <th className="px-4 py-3 font-medium text-grafito-texto">Cliente</th>
-            <th className="px-4 py-3 font-medium text-grafito-texto">Estado</th>
-            <th className="px-4 py-3 font-medium text-grafito-texto">Rol</th>
-            <th className="px-4 py-3 font-medium text-grafito-texto">
-              Último ingreso
-            </th>
-            <th className="px-4 py-3 text-right font-medium text-grafito-texto">
+            {['Usuario', 'Rol', 'Estado', 'Vence', 'Último ingreso'].map((h) => (
+              <th key={h} className="px-4 py-3 text-xs font-medium uppercase tracking-[0.08em] text-grafito-texto">
+                {h}
+              </th>
+            ))}
+            <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-[0.08em] text-grafito-texto">
               Acciones
             </th>
           </tr>
@@ -60,63 +64,44 @@ export function UserTable({
             const busy = busyId === user.id;
 
             return (
-              <tr
-                key={user.id}
-                className="border-b border-grafito/10 last:border-0"
-              >
+              <tr key={user.id} className="border-b border-grafito/10 last:border-0">
                 <td className="px-4 py-3">
                   <p className="text-marfil">{user.fullName}</p>
                   <p className="text-xs text-grafito-texto">{user.email}</p>
+                  {user.phone && (
+                    <p className="text-xs text-grafito-texto">{user.phone}</p>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-marfil/70">
+                  {ROLE_LABEL[user.role]}
                 </td>
                 <td className="px-4 py-3">
                   <StatusChip status={user.status} />
                 </td>
-                <td className="px-4 py-3 text-marfil/70">
-                  {user.role === 'admin'
-                    ? 'Administrador'
-                    : user.role === 'advisor'
-                      ? 'Asesor'
-                      : 'Cliente'}
+                <td className="px-4 py-3 whitespace-nowrap tabular-nums text-marfil/70">
+                  {format(user.accessExpiresAt, 'No vence')}
                 </td>
-                <td className="px-4 py-3 tabular-nums text-marfil/70">
-                  {format(user.lastLoginAt)}
+                <td className="px-4 py-3 whitespace-nowrap tabular-nums text-marfil/70">
+                  {format(user.lastLoginAt, 'Nunca')}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex justify-end gap-1">
-                    {/* Sobre uno mismo no se ofrecen: el backend las rechaza
+                  <div className="flex justify-end gap-2">
+                    <Action label="Editar" onClick={() => onEdit(user)} disabled={busy} />
+                    {/* Sobre uno mismo no se ofrecen: el backend las rechaza,
                         y un botón que siempre falla es una trampa. */}
                     {!isSelf && (
                       <>
-                        <IconButton
-                          label="Volver a pedirle la contraseña"
-                          disabled={busy}
+                        <Action
+                          label="Resetear contraseña"
                           onClick={() => onReset(user)}
-                        >
-                          <KeyRound size={16} />
-                        </IconButton>
-                        <IconButton
-                          label={
-                            user.status === 'suspended'
-                              ? 'Reanudar el acceso'
-                              : 'Pausar el acceso'
-                          }
                           disabled={busy || user.status === 'pending_activation'}
-                          onClick={() => onToggle(user)}
-                        >
-                          {user.status === 'suspended' ? (
-                            <PlayCircle size={16} />
-                          ) : (
-                            <PauseCircle size={16} />
-                          )}
-                        </IconButton>
-                        <IconButton
-                          label="Borrar la cuenta"
+                        />
+                        <Action
+                          label="Eliminar"
+                          onClick={() => onDelete(user)}
                           disabled={busy}
                           danger
-                          onClick={() => onDelete(user)}
-                        >
-                          <Trash2 size={16} />
-                        </IconButton>
+                        />
                       </>
                     )}
                   </div>
@@ -130,31 +115,29 @@ export function UserTable({
   );
 }
 
-function IconButton({
+function Action({
   label,
   onClick,
   disabled,
   danger,
-  children,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
   danger?: boolean;
-  children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={label}
-      title={label}
-      className={`grid size-9 place-items-center rounded-md border border-transparent text-grafito-texto transition-colors hover:border-grafito/40 disabled:cursor-not-allowed disabled:opacity-30 ${
-        danger ? 'hover:text-alerta' : 'hover:text-dorado'
+      className={`whitespace-nowrap rounded-md border px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
+        danger
+          ? 'border-alerta/40 text-alerta hover:bg-alerta/10'
+          : 'border-grafito/40 text-marfil/80 hover:border-dorado hover:text-dorado'
       }`}
     >
-      {children}
+      {label}
     </button>
   );
 }

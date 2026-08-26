@@ -8,6 +8,7 @@ import {
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { UserRole } from '../schemas/user.schema';
 
@@ -32,9 +33,13 @@ export class CreateUserDto {
   @IsEnum(UserRole, { message: 'Ese rol no existe.' })
   role?: UserRole;
 
-  /** Vigencia del acceso. Sin fecha, no vence. */
+  /**
+   * Vigencia del acceso. Si se omite se aplica la de por defecto; con `null`
+   * explícito la cuenta no vence nunca.
+   */
   @IsOptional()
+  @ValidateIf((_, value) => value !== null)
   @Type(() => Date)
   @IsDate({ message: 'La fecha de vencimiento no es válida.' })
-  accessExpiresAt?: Date;
+  accessExpiresAt?: Date | null;
 }
