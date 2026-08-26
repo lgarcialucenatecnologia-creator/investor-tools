@@ -151,7 +151,7 @@ function Strokes({
   on: boolean;
   /** El clon no se vuelve a trazar: nace dibujado y solo entra en escena. */
   solid?: boolean;
-  /** Grosor de línea constante. La casa sí; la planta engorda con su escala. */
+  /** Grosor constante. El edificio sí; la planta engorda con su escala. */
   nonScaling?: boolean;
 }) {
   return (
