@@ -41,6 +41,17 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Tu sesión ya no es válida.');
     }
 
+    // Un cambio de contraseña adelanta `tokensValidAfter`: los tokens de
+    // acceso anteriores mueren aquí, no cuando les toque expirar.
+    if (
+      user.tokensValidAfter &&
+      (payload.iat ?? 0) < Math.floor(user.tokensValidAfter.getTime() / 1000)
+    ) {
+      throw new UnauthorizedException(
+        'Tu contraseña cambió. Inicia sesión de nuevo.',
+      );
+    }
+
     assertAccountUsable(user);
 
     return {

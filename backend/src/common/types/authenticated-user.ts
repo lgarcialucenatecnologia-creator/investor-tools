@@ -29,4 +29,6 @@ export interface JwtPayload {
    * segundos— y la rotación se vuelve una operación vacía.
    */
   jti?: string;
+  /** Lo pone el firmador, en segundos. */
+  iat?: number;
 }

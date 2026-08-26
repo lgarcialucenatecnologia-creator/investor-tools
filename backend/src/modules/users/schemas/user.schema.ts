@@ -114,6 +114,18 @@ export class User {
   @Prop({ type: Date, default: null })
   activationExpiresAt: Date | null;
 
+  /**
+   * Momento a partir del cual valen los tokens. Cambiar la contraseña lo
+   * adelanta, y con eso todos los tokens de acceso emitidos antes dejan de
+   * servir de inmediato — sin esperar los 15 minutos que les quedaban ni
+   * mantener una lista de revocación.
+   *
+   * Se guarda truncado al segundo porque `iat` viene en segundos: así un
+   * token emitido en ese mismo instante no se invalida a sí mismo.
+   */
+  @Prop({ type: Date, default: null })
+  tokensValidAfter: Date | null;
+
   /** Rastro de quién activó la cuenta y desde dónde. */
   @Prop({ type: Date, default: null })
   activatedAt: Date | null;

@@ -42,6 +42,7 @@ async function main(): Promise<void> {
         status: UserStatus.ACTIVE,
         accessExpiresAt: null,
         lastLoginAt: null,
+        tokensValidAfter: null,
       },
     });
     console.log(`Actualizados: ${result.modifiedCount}`);

@@ -123,6 +123,7 @@ export class UsersService {
               Date.now() + activationTtlHours * 3_600_000,
             ),
             sessions: [],
+            tokensValidAfter: new Date(),
             activatedAt: null,
             activatedFromIp: null,
           },

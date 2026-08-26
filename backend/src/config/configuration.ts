@@ -71,6 +71,23 @@ export const configuration = () => {
      * El acceso a la plataforma lo da el asesor tras la compra, no un
      * formulario público. Apagado salvo que se encienda a propósito.
      */
+    /**
+     * Administrador definido por entorno, para `npm run seed:admin`.
+     *
+     * ⚠️ La contraseña queda en el archivo .env y en los registros del
+     * despliegue. Quien tenga acceso al entorno tiene administrador
+     * permanente. Cómodo en desarrollo; en producción conviene cambiarla
+     * desde la aplicación después del primer ingreso.
+     *
+     * Solo lo lee el comando de siembra: NADA en el arranque del servidor
+     * depende de esto, para que borrar la cuenta no la resucite en el
+     * siguiente despliegue.
+     */
+    admin: {
+      email: process.env.ADMIN_EMAIL ?? null,
+      password: process.env.ADMIN_PASSWORD ?? null,
+      fullName: process.env.ADMIN_FULL_NAME ?? null,
+    },
     activation: {
       /** Plazo para crear la contraseña desde que el asesor da el alta. */
       ttlHours: positiveInt('ACTIVATION_TTL_HOURS', 72),
