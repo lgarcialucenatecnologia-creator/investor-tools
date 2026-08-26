@@ -282,6 +282,9 @@ export function OpeningSequence() {
   );
   const weeks = useCountUp(FIGURES.weeksPaid, scene === "weeks", 2600 * factor);
   const otherLine = useTypewriter(COPY.other, reached("other"), 52);
+  // Más rápidos que el resto: son pies de imagen sobre el dibujo, no titulares.
+  const planLine = useTypewriter(COPY.planCaption, scene === "plan", 40);
+  const liftLine = useTypewriter(COPY.liftCaption, scene === "lift", 40);
 
   const eaten = useDrain(drainMs > 0, drainMs * factor);
   const showGlyph =
@@ -408,6 +411,15 @@ export function OpeningSequence() {
 
       {reached("plan") && !reached("hold") && (
         <div className="sheet-stack">
+          {(scene === "plan" || scene === "lift") && (
+            <p className="sheet-caption">
+              {scene === "plan" ? planLine.typed : liftLine.typed}
+              {!(scene === "plan" ? planLine : liftLine).done && (
+                <span className="intro-caret" />
+              )}
+            </p>
+          )}
+
           <BlueprintScene
             stage={stageFor(scene, reached)}
             figureStep={figureStep}

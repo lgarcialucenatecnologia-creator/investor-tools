@@ -146,7 +146,7 @@ type Beat = {
 };
 
 export const SCRIPT: readonly Beat[] = [
-  // ---- ACTO 1 · 0–17.4 s ----
+  // ---- ACTO 1 ----
   { scene: "worked", ms: 2500, act: 1 },
   { scene: "remaining", ms: 2500, act: 1 },
   { scene: "payday", ms: 1700, act: 1 },
@@ -154,7 +154,7 @@ export const SCRIPT: readonly Beat[] = [
   { scene: "zero", ms: 1700, act: 1 },
   { scene: "cycle2", ms: 2500, act: 1 },
   { scene: "cycle3", ms: 1300, act: 1, skipOnMobile: true },
-  // ---- ACTO 2 · 17.4–31.3 s ----
+  // ---- ACTO 2 ----
   { scene: "weeks", ms: 3400, act: 2 },
   { scene: "jump", ms: 2400, act: 2 },
   { scene: "pension", ms: 2800, act: 2 },
@@ -162,15 +162,15 @@ export const SCRIPT: readonly Beat[] = [
   { scene: "verdict", ms: 2400, act: 2 }, // la frase tiene que asentarse
   // ---- RUPTURA · el silencio ----
   { scene: "rupture", ms: 1200, act: 2 },
-  // ---- ACTO 3 · 32.5–51.6 s ----
+  // ---- ACTO 3 ----
   { scene: "other", ms: 1700, act: 3 },
   { scene: "plan", ms: 4000, act: 3 },
-  { scene: "lift", ms: 2800, act: 3 },
+  { scene: "lift", ms: 3600, act: 3 },
   { scene: "listed", ms: 1700, act: 3 },
   { scene: "comps", ms: 3200, act: 3 },
   { scene: "costs", ms: 2500, act: 3 },
   { scene: "material", ms: 3200, act: 3 },
-  // ---- ACTO 4 · 51.6–63.2 s ----
+  // ---- ACTO 4 ----
   { scene: "repeat", ms: 4000, act: 4 },
   { scene: "method", ms: 2600, act: 4 },
   { scene: "hold", ms: 5000, act: 4 },
@@ -207,7 +207,7 @@ export const MOBILE_UNITS = 4;
 export const DESKTOP_UNITS = 8;
 
 /** Versionada: si el guion cambia, la secuencia vuelve a correr una vez. */
-export const SEEN_KEY = "luifer:intro:v12";
+export const SEEN_KEY = "luifer:intro:v13";
 
 export const COPY = {
   gateTitle: "Pulsa para continuar",
@@ -227,6 +227,11 @@ export const COPY = {
   verdict: "El sistema no tiene otro final. Tiene el mismo, más tarde.",
 
   other: "Hay otra forma de pensionarse.",
+  // Mientras se traza la planta no hay nada construido — que es literalmente
+  // lo que se compra sobre planos. La frase describe lo que está en pantalla.
+  planCaption: "Sobre planos, esto es todo lo que existe.",
+  liftCaption:
+    "Los proyectos se venden por listas. La lista 0 es la primera y la más baja.",
   listed: "precio publicado",
   compsLead: "lo que se está pagando en la zona",
   adjusted: "precio ajustado a mercado",
