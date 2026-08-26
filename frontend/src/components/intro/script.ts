@@ -207,7 +207,7 @@ export const MOBILE_UNITS = 4;
 export const DESKTOP_UNITS = 8;
 
 /** Versionada: si el guion cambia, la secuencia vuelve a correr una vez. */
-export const SEEN_KEY = "luifer:intro:v11";
+export const SEEN_KEY = "luifer:intro:v12";
 
 export const COPY = {
   gateTitle: "Pulsa para continuar",

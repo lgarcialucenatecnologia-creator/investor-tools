@@ -9,9 +9,14 @@
  * razón real por la que la compuerta existe: los navegadores no dejan sonar
  * nada sin un gesto previo del usuario.
  *
- * Los Actos 1 y 2 suenan a oficina: reloj, teclado, clicks secos. Los Actos 3
- * y 4 suenan a precisión: lápiz técnico, encajes, calculadora. Nada de música
- * épica — el tono del método es ordenado, no emocionante.
+ * No hay ninguna capa continua. Ni colchón, ni ambiente, ni zumbido: todo lo
+ * que suena es un suceso que empieza, decae y se apaga. Entre uno y otro queda
+ * silencio de verdad, y ese silencio es el vacío de los Actos 1 y 2 — mucho
+ * más desolado que cualquier nota sostenida.
+ *
+ * Los Actos 1 y 2 son el reloj, notas sueltas que caen y clicks secos. Los
+ * Actos 3 y 4 son precisión: lápiz técnico, encajes, calculadora. Nada de
+ * música épica — el tono del método es ordenado, no emocionante.
  */
 
 export type Cue =
@@ -30,18 +35,10 @@ export type Cue =
 export type IntroAudio = {
   cue: (c: Cue) => void;
   /**
-   * Sostenido de los Actos 1 y 2: una quinta hueca, grave y muy tenue.
-   * Sin tercera, así que no es ni mayor ni menor — no es un acorde triste,
-   * es un vacío. Es lo único que suena continuo, y suena poco.
-   */
-  pad: (on: boolean) => void;
-  /**
    * Una nota sola que cae, más grave que la anterior, con cola larga. Es el
    * gesto del hundimiento: espaciadas, nunca dos a la vez.
    */
   descend: () => void;
-  /** Aire de la sala. Agudo y casi inaudible, nunca un retumbe. */
-  ambience: (on: boolean) => void;
   /** Corta absolutamente todo. La ruptura del segundo 22. */
   silence: (on: boolean) => void;
   setMuted: (muted: boolean) => void;
@@ -152,66 +149,6 @@ export function createIntroAudio(): IntroAudio | null {
     burst("bandpass", tock ? 540 : 780, 6, tock ? 0.11 : 0.14, 0.06);
   }
 
-  // --- Capas sostenidas: colchón grave y rumor de oficina ---
-  function sustained(
-    build: (dest: GainNode) => void,
-    target: number,
-    riseS: number,
-    fallS: number,
-  ) {
-    let node: GainNode | null = null;
-    return (on: boolean) => {
-      const t = ctx.currentTime;
-      if (on) {
-        if (node) return;
-        node = ctx.createGain();
-        node.gain.setValueAtTime(0.0001, t);
-        node.gain.exponentialRampToValueAtTime(target, t + riseS);
-        build(node);
-        return;
-      }
-      if (!node) return;
-      const dying = node;
-      node = null;
-      dying.gain.cancelScheduledValues(t);
-      dying.gain.setValueAtTime(Math.max(dying.gain.value, 0.0001), t);
-      dying.gain.exponentialRampToValueAtTime(0.0001, t + fallS);
-    };
-  }
-
-  /**
-   * Quinta hueca en A2 · E3, dos octavas por debajo de donde estaba antes.
-   *
-   * Sin tercera no hay acorde: no suena triste, suena vacío, que es otra cosa
-   * y es la que hace falta. Senos puros, sin desafinar entre sí — el batido de
-   * dos voces desafinadas sostenido treinta segundos es exactamente lo que
-   * aturde. Filtro a 400 Hz para que nada asome por arriba, y entrada de cinco
-   * segundos para que uno no note cuándo empezó.
-   */
-  const pad = sustained(
-    (dest) => {
-      const lp = ctx.createBiquadFilter();
-      lp.type = "lowpass";
-      lp.frequency.value = 400;
-      dest.connect(lp).connect(master);
-      for (const [freq, level] of [
-        [110.0, 1.0], // A2
-        [164.81, 0.45], // E3 — la quinta, apenas insinuada
-      ]) {
-        const osc = ctx.createOscillator();
-        osc.type = "sine";
-        osc.frequency.value = freq;
-        const g = ctx.createGain();
-        g.gain.value = level;
-        osc.connect(g).connect(dest);
-        osc.start(ctx.currentTime);
-      }
-    },
-    0.05,
-    5.0,
-    1.6,
-  );
-
   /**
    * La menor descendente, una nota cada vez. Cada llamada baja un grado y la
    * cola es larga, así que la sala se queda sonando sola entre nota y nota.
@@ -227,28 +164,6 @@ export function createIntroAudio(): IntroAudio | null {
     // Una octava por debajo, aún más floja: le da cuerpo sin subir el brillo.
     tone(freq / 2, 0.028 * fade, 0.08, 2.2, "sine");
   }
-
-  /**
-   * Aire, no maquinaria. Ruido filtrado por paso-alto: se percibe como el
-   * silencio de una habitación, no como algo que zumba. Antes había un
-   * fluorescente a 120 Hz y ruido grave que retumbaban.
-   */
-  const ambience = sustained(
-    (dest) => {
-      const hp = ctx.createBiquadFilter();
-      hp.type = "highpass";
-      hp.frequency.value = 2200;
-      dest.connect(hp).connect(master);
-      const src = ctx.createBufferSource();
-      src.buffer = noise;
-      src.loop = true;
-      src.connect(dest);
-      src.start(ctx.currentTime);
-    },
-    0.022,
-    2.5,
-    0.8,
-  );
 
   function cue(c: Cue) {
     switch (c) {
@@ -311,9 +226,7 @@ export function createIntroAudio(): IntroAudio | null {
 
   return {
     cue,
-    pad,
     descend,
-    ambience,
     silence: (on) => {
       const t = ctx.currentTime;
       silencer.gain.cancelScheduledValues(t);
@@ -328,8 +241,6 @@ export function createIntroAudio(): IntroAudio | null {
       master.gain.linearRampToValueAtTime(muted ? 0.0001 : MASTER, t + 0.18);
     },
     close: () => {
-      pad(false);
-      ambience(false);
       window.setTimeout(() => void ctx.close(), 1000);
     },
   };

@@ -186,12 +186,6 @@ export function OpeningSequence() {
     audio.current?.setMuted(muted);
   }, [muted]);
 
-  // ---------- Audio por acto ----------
-  useEffect(() => {
-    const a = audio.current;
-    if (!a) return;
-    a.ambience(act <= 2 && scene !== "rupture");
-  }, [act, scene]);
 
   /**
    * Las notas que caen. Van sobre `act`, no sobre `scene`: si dependieran de
@@ -236,7 +230,6 @@ export function OpeningSequence() {
       }
       return () => ids.forEach(window.clearTimeout);
     }
-    if (scene === "payday") a.pad(true);
     if (scene === "zero" || scene === "pensionZero") {
       a.cue("collapse");
       // El suspiro entra cuando el cero ya está en pantalla, no encima del golpe.
@@ -245,7 +238,6 @@ export function OpeningSequence() {
     }
     if (scene === "weeks") a.cue("calc");
     if (scene === "rupture") {
-      a.pad(false);
       a.cue("glitch");
       // El silencio absoluto arranca apenas pasa el glitch y es lo único que
       // suena —o deja de sonar— durante un segundo entero.
