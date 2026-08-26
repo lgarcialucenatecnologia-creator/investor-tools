@@ -71,6 +71,10 @@ export const configuration = () => {
      * El acceso a la plataforma lo da el asesor tras la compra, no un
      * formulario público. Apagado salvo que se encienda a propósito.
      */
+    activation: {
+      /** Plazo para crear la contraseña desde que el asesor da el alta. */
+      ttlHours: positiveInt('ACTIVATION_TTL_HOURS', 72),
+    },
     selfRegistrationEnabled: process.env.SELF_REGISTRATION_ENABLED === 'true',
   };
 };

@@ -7,29 +7,31 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { SignOptions } from 'jsonwebtoken';
-import * as bcrypt from 'bcrypt';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { MongoServerError } from 'mongodb';
 import { Types } from 'mongoose';
-import { assertAccountUsable } from '../../common/access/account-access';
+import {
+  assertAccountUsable,
+  assertActivationOpen,
+  assertNotPending,
+} from '../../common/access/account-access';
 import type { JwtPayload } from '../../common/types/authenticated-user';
-import { Session, UserDocument } from '../users/schemas/user.schema';
+import {
+  Session,
+  UserDocument,
+  UserStatus,
+} from '../users/schemas/user.schema';
+import { hashPassword, verifyPassword } from '../users/password.util';
 import { UsersService } from '../users/users.service';
+import { CheckNewUserDto } from './dto/check-new-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { SetInitialPasswordDto } from './dto/set-initial-password.dto';
 import { RegisterDto } from './dto/register.dto';
 
-const SALT_ROUNDS = 12;
 const DUPLICATE_KEY = 11000;
 
 /** Mensaje único para todo fallo de sesión: no revela en qué falló. */
 const SESSION_GONE = 'Tu sesión expiró. Inicia sesión de nuevo.';
-
-/**
- * Hash de descarte con el que se compara cuando el correo no existe, para
- * que el login tarde lo mismo exista o no la cuenta y no se pueda enumerar
- * usuarios midiendo el tiempo de respuesta.
- */
-const DUMMY_HASH = bcrypt.hashSync('cuenta-inexistente', SALT_ROUNDS);
 
 /**
  * Los refresh tokens se guardan como SHA-256, no con bcrypt: bcrypt trunca
@@ -74,7 +76,7 @@ export class AuthService {
       );
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
+    const passwordHash = await hashPassword(dto.password);
 
     try {
       const user = await this.usersService.create({
@@ -96,9 +98,14 @@ export class AuthService {
 
   async login(dto: LoginDto, userAgent?: string): Promise<AuthResult> {
     const user = await this.usersService.findByEmailWithPassword(dto.email);
-    const passwordMatches = await bcrypt.compare(
+
+    // Antes de la contraseña: una cuenta pendiente no tiene ninguna válida,
+    // así que sin esto el usuario nuevo que llega por aquí no tendría salida.
+    if (user) assertNotPending(user);
+
+    const passwordMatches = await verifyPassword(
       dto.password,
-      user?.passwordHash ?? DUMMY_HASH,
+      user?.passwordHash,
     );
 
     if (!user || !passwordMatches) {
@@ -111,6 +118,61 @@ export class AuthService {
 
     await this.usersService.touchLastLogin(user.id);
     return this.issueSession(user, userAgent);
+  }
+
+  /**
+   * «Soy usuario nuevo»: comprueba que la cuenta exista y siga sin
+   * contraseña. Responde lo mismo cuando el correo no existe y cuando ya
+   * está activo — así no se puede usar esta pantalla para averiguar quién
+   * es cliente probando correos.
+   */
+  async checkNewUser(
+    dto: CheckNewUserDto,
+  ): Promise<{ email: string; fullName: string }> {
+    const user = await this.usersService.findByEmail(dto.email);
+
+    if (!user || user.status !== UserStatus.PENDING_ACTIVATION) {
+      throw new UnauthorizedException(
+        'No encontramos una cuenta pendiente con ese correo. Confirma con tu asesor que ya esté creada.',
+      );
+    }
+
+    assertActivationOpen(user);
+    return { email: user.email, fullName: user.fullName };
+  }
+
+  /** Crea la contraseña de una cuenta pendiente y abre sesión. */
+  async setInitialPassword(
+    dto: SetInitialPasswordDto,
+    userAgent?: string,
+    fromIp?: string,
+  ): Promise<AuthResult> {
+    const user = await this.usersService.findByEmail(dto.email);
+
+    if (!user || user.status !== UserStatus.PENDING_ACTIVATION) {
+      throw new UnauthorizedException(
+        'No encontramos una cuenta pendiente con ese correo. Confirma con tu asesor que ya esté creada.',
+      );
+    }
+
+    assertActivationOpen(user);
+
+    const activated = await this.usersService.activate(
+      user.id,
+      await hashPassword(dto.password),
+      fromIp ?? null,
+    );
+
+    // Solo una de dos peticiones simultáneas encuentra la cuenta pendiente:
+    // la otra llega aquí con `null` y no se lleva la cuenta.
+    if (!activated) {
+      throw new UnauthorizedException(
+        'Esa cuenta ya tiene contraseña. Inicia sesión normalmente.',
+      );
+    }
+
+    await this.usersService.touchLastLogin(activated.id);
+    return this.issueSession(activated, userAgent);
   }
 
   async refresh(refreshToken: string): Promise<AuthTokens> {

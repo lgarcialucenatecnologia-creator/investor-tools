@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Session, User, UserDocument } from './schemas/user.schema';
+import { Session, User, UserDocument, UserStatus } from './schemas/user.schema';
+import { UNUSABLE_PASSWORD_HASH } from './password.util';
 
 @Injectable()
 export class UsersService {
@@ -18,8 +19,62 @@ export class UsersService {
     return this.userModel.create(data);
   }
 
+  /**
+   * Alta desde la administración: la cuenta existe pero todavía no tiene
+   * contraseña. No se guarda cadena vacía sino un hash imposible, para que
+   * responda en el mismo tiempo que cualquier otra.
+   */
+  createPending(data: {
+    fullName: string;
+    email: string;
+    phone?: string;
+    activationTtlHours: number;
+  }): Promise<UserDocument> {
+    return this.userModel.create({
+      fullName: data.fullName,
+      email: data.email.toLowerCase(),
+      phone: data.phone,
+      passwordHash: UNUSABLE_PASSWORD_HASH,
+      status: UserStatus.PENDING_ACTIVATION,
+      activationExpiresAt: new Date(
+        Date.now() + data.activationTtlHours * 3_600_000,
+      ),
+    });
+  }
+
+  /**
+   * Fija la contraseña y activa la cuenta en una sola operación condicionada
+   * a que siga pendiente. Si dos peticiones llegan a la vez, solo una
+   * encuentra el documento en ese estado: la segunda no encuentra nada.
+   */
+  activate(
+    id: string,
+    passwordHash: string,
+    fromIp: string | null,
+  ): Promise<UserDocument | null> {
+    return this.userModel
+      .findOneAndUpdate(
+        { _id: id, status: UserStatus.PENDING_ACTIVATION },
+        {
+          $set: {
+            passwordHash,
+            status: UserStatus.ACTIVE,
+            activationExpiresAt: null,
+            activatedAt: new Date(),
+            activatedFromIp: fromIp,
+          },
+        },
+        { new: true },
+      )
+      .exec();
+  }
+
   findById(id: string | Types.ObjectId): Promise<UserDocument | null> {
     return this.userModel.findById(id).exec();
+  }
+
+  findByEmail(email: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ email: email.toLowerCase() }).exec();
   }
 
   /** Incluye `passwordHash`, excluido por defecto del esquema. */

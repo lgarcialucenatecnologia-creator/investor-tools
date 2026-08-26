@@ -105,6 +105,21 @@ export class User {
 
   @Prop({ type: Date, default: null })
   lastLoginAt: Date | null;
+
+  /**
+   * Hasta cuándo se puede crear la contraseña. Acota la ventana en la que
+   * una cuenta recién dada de alta puede ser reclamada por quien conozca el
+   * correo. `null` = sin plazo.
+   */
+  @Prop({ type: Date, default: null })
+  activationExpiresAt: Date | null;
+
+  /** Rastro de quién activó la cuenta y desde dónde. */
+  @Prop({ type: Date, default: null })
+  activatedAt: Date | null;
+
+  @Prop({ type: String, default: null })
+  activatedFromIp: string | null;
 }
 
 export type UserDocument = HydratedDocument<User>;

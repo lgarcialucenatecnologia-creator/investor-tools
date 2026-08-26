@@ -5,6 +5,7 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
+  Ip,
   Post,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
@@ -12,7 +13,9 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { AuthService } from './auth.service';
+import { CheckNewUserDto } from './dto/check-new-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { SetInitialPasswordDto } from './dto/set-initial-password.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -24,6 +27,13 @@ const CREDENTIAL_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
  * pestañas, así que necesita un cupo más holgado que el login.
  */
 const REFRESH_THROTTLE = { default: { limit: 20, ttl: 60_000 } };
+
+/**
+ * Activación: más estricto que el login. Es la pantalla desde la que se
+ * podría barrer correos para averiguar quién es cliente, y a diferencia del
+ * login nadie la usa varias veces seguidas de forma legítima.
+ */
+const ACTIVATION_THROTTLE = { default: { limit: 3, ttl: 60_000 } };
 
 @Controller('auth')
 export class AuthController {
@@ -42,6 +52,28 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto, @Headers('user-agent') ua?: string) {
     return this.authService.login(dto, ua);
+  }
+
+  /** «Soy usuario nuevo»: ¿esta cuenta existe y sigue sin contraseña? */
+  @Public()
+  @Throttle(ACTIVATION_THROTTLE)
+  @HttpCode(HttpStatus.OK)
+  @Post('check-new-user')
+  checkNewUser(@Body() dto: CheckNewUserDto) {
+    return this.authService.checkNewUser(dto);
+  }
+
+  /** Crea la contraseña de una cuenta pendiente y deja al usuario dentro. */
+  @Public()
+  @Throttle(ACTIVATION_THROTTLE)
+  @HttpCode(HttpStatus.OK)
+  @Post('set-initial-password')
+  setInitialPassword(
+    @Body() dto: SetInitialPasswordDto,
+    @Headers('user-agent') ua?: string,
+    @Ip() ip?: string,
+  ) {
+    return this.authService.setInitialPassword(dto, ua, ip);
   }
 
   @Public()
