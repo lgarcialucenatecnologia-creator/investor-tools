@@ -264,7 +264,7 @@ export const COPY = {
    */
   holdLine: "Y no tuviste que esperar a envejecer.",
   method: "MÉTODO GANAR AL COMPRAR",
-  brand: "Pensionate con Bienes Raíces",
+  brand: "Pensionate joven con Bienes Raíces",
   tagline:
     "La libertad no llega con la edad. Llega cuando el ingreso deja de depender de ti.",
   cta: "Entrar",

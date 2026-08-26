@@ -22,7 +22,7 @@ export default async function Home() {
       </p>
 
       <h1 className="font-display text-4xl leading-tight text-oro md:text-5xl">
-        Pensionate con Bienes Raíces
+        Pensionate joven con Bienes Raíces
       </h1>
 
       <p className="max-w-md leading-relaxed text-marfil/70">
