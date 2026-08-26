@@ -13,7 +13,9 @@ import { TOOLS, findTool } from '@/lib/tools';
  * muestre contenido de una herramienta que no existe, y no se muestra.
  */
 export function generateStaticParams() {
-  return TOOLS.map((tool) => ({ tool: tool.slug }));
+  return TOOLS.filter((tool) => !tool.ready).map((tool) => ({
+    tool: tool.slug,
+  }));
 }
 
 
@@ -32,7 +34,9 @@ export default async function ToolPage({
   params: Promise<{ tool: string }>;
 }) {
   const tool = findTool((await params).tool);
-  if (!tool) notFound();
+  // Una herramienta lista tiene su propia ruta y no pasa por aquí; si llega,
+  // es que alguien escribió mal la dirección.
+  if (!tool || tool.ready) notFound();
 
   return (
     <div className="flex flex-col gap-10">

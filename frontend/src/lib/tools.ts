@@ -72,7 +72,7 @@ export const TOOLS: Tool[] = [
       'Tu precio máximo, con escrituración e impuestos incluidos',
       'Un sí o un no, con las razones escritas',
     ],
-    ready: false,
+    ready: true,
   },
 ];
 

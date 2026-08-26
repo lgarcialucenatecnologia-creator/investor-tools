@@ -39,3 +39,46 @@ export interface Paginated<T> {
   limit: number;
   pages: number;
 }
+
+/* ---------- Filtro de Seguridad ---------- */
+
+export interface Comparable {
+  reference: string;
+  areaM2: number;
+  price: number;
+}
+
+export interface FilterDefaults {
+  deedCostRate: number;
+  taxRate: number;
+  safetyMarginRate: number;
+  refurbishCost: number;
+}
+
+/** Cada paso del cálculo, para poder explicar el veredicto. */
+export interface FilterResult {
+  medianPricePerM2: number;
+  marketValue: number;
+  /** Negativo = piden más de lo que vale. */
+  listedVsMarket: number;
+  deedCost: number;
+  taxCost: number;
+  refurbishCost: number;
+  entryCosts: number;
+  safetyMargin: number;
+  maxPrice: number;
+  gainAtMaxPrice: number;
+  passes: boolean;
+}
+
+export interface Analysis extends FilterDefaults {
+  id: string;
+  projectName: string;
+  location: string | null;
+  listedPrice: number;
+  areaM2: number;
+  comparables: Comparable[];
+  result: FilterResult;
+  notes: string | null;
+  createdAt: string;
+}

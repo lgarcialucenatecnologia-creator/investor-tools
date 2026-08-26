@@ -22,6 +22,18 @@ function positiveInt(name: string, fallback: number): number {
  * fallaría siempre por variables ausentes que en realidad sí están.
  */
 export const configuration = () => {
+  function rate(name: string, fallback: number): number {
+    const raw = process.env[name];
+    if (raw === undefined) return fallback;
+    const value = Number.parseFloat(raw);
+    if (!Number.isFinite(value) || value < 0 || value > 0.5) {
+      throw new Error(
+        `${name} debe ser una proporción entre 0 y 0.5 — 0.02 es 2%. Recibido: "${raw}"`,
+      );
+    }
+    return value;
+  }
+
   const accessSecret = required('JWT_ACCESS_SECRET');
   const refreshSecret = required('JWT_REFRESH_SECRET');
 
@@ -94,6 +106,19 @@ export const configuration = () => {
        * fijar otra fecha, o `null` para que no venza nunca.
        */
       defaultMonths: positiveInt('ACCESS_DEFAULT_MONTHS', 12),
+    },
+    /**
+     * Valores por defecto del Filtro de Seguridad. Cada análisis puede usar
+     * otros; estos son los que trae puesto el formulario.
+     *
+     * ⚠️ Pendiente de que Luifer los fije con su criterio: los costos de
+     * escrituración e impuestos varían por municipio y por tipo de negocio,
+     * y el margen de seguridad es una decisión de método, no un dato.
+     */
+    filter: {
+      deedCostRate: rate('FILTER_DEED_COST_RATE', 0.02),
+      taxRate: rate('FILTER_TAX_RATE', 0.015),
+      safetyMarginRate: rate('FILTER_SAFETY_MARGIN_RATE', 0.05),
     },
     activation: {
       /** Plazo para crear la contraseña desde que el asesor da el alta. */
