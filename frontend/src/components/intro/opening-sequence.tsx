@@ -193,6 +193,19 @@ export function OpeningSequence() {
     a.ambience(act <= 2 && scene !== "rupture");
   }, [act, scene]);
 
+  /**
+   * Las notas que caen. Van sobre `act`, no sobre `scene`: si dependieran de
+   * la escena, cada corte reiniciaría el intervalo y con escenas de dos
+   * segundos no llegaría a sonar ninguna.
+   */
+  const silent = scene === "rupture";
+  useEffect(() => {
+    const a = audio.current;
+    if (!a || act > 2 || silent) return;
+    const id = window.setInterval(() => a.descend(), 4600 * factor);
+    return () => window.clearInterval(id);
+  }, [act, silent, factor]);
+
   // El tic de reloj vive en el Acto 1 y se acelera cuando arranca el contador.
   useEffect(() => {
     const a = audio.current;

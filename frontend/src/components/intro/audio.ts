@@ -30,11 +30,16 @@ export type Cue =
 export type IntroAudio = {
   cue: (c: Cue) => void;
   /**
-   * Sostenido de los Actos 1 y 2: un la menor abierto, tenue y sin peso.
-   * No es un colchón grave — lo que se está perdiendo es tiempo, no una
-   * máquina lo que ruge.
+   * Sostenido de los Actos 1 y 2: una quinta hueca, grave y muy tenue.
+   * Sin tercera, así que no es ni mayor ni menor — no es un acorde triste,
+   * es un vacío. Es lo único que suena continuo, y suena poco.
    */
   pad: (on: boolean) => void;
+  /**
+   * Una nota sola que cae, más grave que la anterior, con cola larga. Es el
+   * gesto del hundimiento: espaciadas, nunca dos a la vez.
+   */
+  descend: () => void;
   /** Aire de la sala. Agudo y casi inaudible, nunca un retumbe. */
   ambience: (on: boolean) => void;
   /** Corta absolutamente todo. La ruptura del segundo 22. */
@@ -175,39 +180,53 @@ export function createIntroAudio(): IntroAudio | null {
   }
 
   /**
-   * La menor con novena: A3 · C4 · E4 · B4. La tercera menor (el C sobre el A)
-   * es lo que lo vuelve triste; la novena lo deja en suspenso en vez de
-   * cerrarlo. Ondas triangulares y filtro suave para que sea tenue y no se
-   * imponga sobre el tic-tac. Cada voz suena más débil que la anterior, así el
-   * agudo apenas se insinúa.
+   * Quinta hueca en A2 · E3, dos octavas por debajo de donde estaba antes.
+   *
+   * Sin tercera no hay acorde: no suena triste, suena vacío, que es otra cosa
+   * y es la que hace falta. Senos puros, sin desafinar entre sí — el batido de
+   * dos voces desafinadas sostenido treinta segundos es exactamente lo que
+   * aturde. Filtro a 400 Hz para que nada asome por arriba, y entrada de cinco
+   * segundos para que uno no note cuándo empezó.
    */
   const pad = sustained(
     (dest) => {
       const lp = ctx.createBiquadFilter();
       lp.type = "lowpass";
-      lp.frequency.value = 1200;
+      lp.frequency.value = 400;
       dest.connect(lp).connect(master);
-      const voices: [number, number, number][] = [
-        [220.0, 1.0, -3], // A3
-        [261.63, 0.72, 4], // C4 — la tercera menor
-        [329.63, 0.5, -5], // E4
-        [493.88, 0.3, 6], // B4 — la novena
-      ];
-      for (const [freq, level, detune] of voices) {
+      for (const [freq, level] of [
+        [110.0, 1.0], // A2
+        [164.81, 0.45], // E3 — la quinta, apenas insinuada
+      ]) {
         const osc = ctx.createOscillator();
-        osc.type = "triangle";
+        osc.type = "sine";
         osc.frequency.value = freq;
-        osc.detune.value = detune;
         const g = ctx.createGain();
         g.gain.value = level;
         osc.connect(g).connect(dest);
         osc.start(ctx.currentTime);
       }
     },
-    0.055,
-    3.0,
-    1.4,
+    0.05,
+    5.0,
+    1.6,
   );
+
+  /**
+   * La menor descendente, una nota cada vez. Cada llamada baja un grado y la
+   * cola es larga, así que la sala se queda sonando sola entre nota y nota.
+   * Cuando se acaba la escala vuelve arriba, pero más floja: se va apagando.
+   */
+  const LADDER = [220.0, 196.0, 174.61, 164.81, 146.83, 130.81, 110.0];
+  let rung = 0;
+  function descend() {
+    const freq = LADDER[rung % LADDER.length];
+    const fade = rung >= LADDER.length ? 0.62 : 1;
+    rung += 1;
+    tone(freq, 0.05 * fade, 0.06, 2.6, "triangle");
+    // Una octava por debajo, aún más floja: le da cuerpo sin subir el brillo.
+    tone(freq / 2, 0.028 * fade, 0.08, 2.2, "sine");
+  }
 
   /**
    * Aire, no maquinaria. Ruido filtrado por paso-alto: se percibe como el
@@ -237,9 +256,10 @@ export function createIntroAudio(): IntroAudio | null {
         clockTick();
         break;
       case "sigh":
-        // Tercera menor descendente, el gesto del suspiro. Do baja a la.
-        tone(523.25, 0.055, 0.22, 0.5, "triangle");
-        window.setTimeout(() => tone(440.0, 0.05, 0.2, 1.1, "triangle"), 430);
+        // Tercera menor descendente, el gesto del suspiro. Do baja a la, una
+        // octava más abajo que el registro que aturdía.
+        tone(261.63, 0.05, 0.25, 0.6, "triangle");
+        window.setTimeout(() => tone(220.0, 0.045, 0.22, 1.4, "triangle"), 460);
         break;
       case "click": // cada gasto que llega: seco, sin cuerpo, sin apelación
         burst("highpass", 4200, 1, 0.16, 0.016);
@@ -292,6 +312,7 @@ export function createIntroAudio(): IntroAudio | null {
   return {
     cue,
     pad,
+    descend,
     ambience,
     silence: (on) => {
       const t = ctx.currentTime;
