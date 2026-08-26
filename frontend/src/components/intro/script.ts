@@ -165,7 +165,7 @@ export const SCRIPT: readonly Beat[] = [
   // ---- ACTO 3 ----
   { scene: "other", ms: 1700, act: 3 },
   { scene: "plan", ms: 4000, act: 3 },
-  { scene: "lift", ms: 3600, act: 3 },
+  { scene: "lift", ms: 4000, act: 3 },
   { scene: "listed", ms: 1700, act: 3 },
   { scene: "comps", ms: 3200, act: 3 },
   { scene: "costs", ms: 2500, act: 3 },
@@ -207,7 +207,7 @@ export const MOBILE_UNITS = 4;
 export const DESKTOP_UNITS = 8;
 
 /** Versionada: si el guion cambia, la secuencia vuelve a correr una vez. */
-export const SEEN_KEY = "luifer:intro:v13";
+export const SEEN_KEY = "luifer:intro:v14";
 
 export const COPY = {
   gateTitle: "Pulsa para continuar",
@@ -227,11 +227,19 @@ export const COPY = {
   verdict: "El sistema no tiene otro final. Tiene el mismo, más tarde.",
 
   other: "Hay otra forma de pensionarse.",
-  // Mientras se traza la planta no hay nada construido — que es literalmente
-  // lo que se compra sobre planos. La frase describe lo que está en pantalla.
-  planCaption: "Sobre planos, esto es todo lo que existe.",
+  /**
+   * Las dos líneas del trazado. La primera describe lo que hay en pantalla —
+   * un dibujo y nada más, que es literalmente lo que se compra en lista 0. La
+   * segunda dice dónde está la ganancia: no en vender después, sino en que la
+   * valorización de la obra le pertenece a quien entró primero.
+   *
+   * Ninguna promete una cifra ni un porcentaje: describen a quién le
+   * corresponde la valorización, no cuánta va a ser.
+   */
+  planCaption:
+    "Sobre planos, esto es todo lo que existe. Y ya se puede comprar en lista 0.",
   liftCaption:
-    "Los proyectos se venden por listas. La lista 0 es la primera y la más baja.",
+    "Se valoriza mientras se levanta. Y esa valorización es de quien compró primero.",
   listed: "precio publicado",
   compsLead: "lo que se está pagando en la zona",
   adjusted: "precio ajustado a mercado",
