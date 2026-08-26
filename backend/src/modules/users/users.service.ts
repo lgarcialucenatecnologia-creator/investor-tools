@@ -1,6 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import type { QueryFilter } from 'mongoose';
+import { UserRole } from './schemas/user.schema';
+import { CreateUserDto } from './dto/create-user.dto';
+import { FindUsersQueryDto } from './dto/find-users-query.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { Session, User, UserDocument, UserStatus } from './schemas/user.schema';
 import { UNUSABLE_PASSWORD_HASH } from './password.util';
 
@@ -20,24 +25,153 @@ export class UsersService {
   }
 
   /**
+   * La única forma en que un usuario sale del backend. Deja fuera
+   * `passwordHash` y `sessions` por construcción, en vez de confiar en que
+   * cada consulta se acuerde de excluirlos.
+   */
+  sanitize(user: UserDocument) {
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone ?? null,
+      role: user.role,
+      status: user.status,
+      accessExpiresAt: user.accessExpiresAt,
+      activationExpiresAt: user.activationExpiresAt,
+      lastLoginAt: user.lastLoginAt,
+      createdAt: (user as unknown as { createdAt: Date }).createdAt,
+    };
+  }
+
+  /** Listado paginado del panel de administración. */
+  async findAll(query: FindUsersQueryDto) {
+    // Mongoose 9 renombró `FilterQuery` a `QueryFilter`.
+    const filter: QueryFilter<User> = {};
+    if (query.status) filter.status = query.status;
+    if (query.role) filter.role = query.role;
+    if (query.search?.trim()) {
+      // Se escapa la entrada: sin esto, un usuario podría enviar una
+      // expresión regular capaz de agotar la CPU del servidor.
+      const safe = query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { fullName: { $regex: safe, $options: 'i' } },
+        { email: { $regex: safe, $options: 'i' } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      this.userModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip((query.page - 1) * query.limit)
+        .limit(query.limit)
+        .exec(),
+      this.userModel.countDocuments(filter).exec(),
+    ]);
+
+    return {
+      items: items.map((u) => this.sanitize(u)),
+      total,
+      page: query.page,
+      limit: query.limit,
+      pages: Math.max(1, Math.ceil(total / query.limit)),
+    };
+  }
+
+  async stats() {
+    const rows = await this.userModel.aggregate<{ _id: string; n: number }>([
+      { $group: { _id: '$status', n: { $sum: 1 } } },
+    ]);
+    const byStatus = Object.fromEntries(rows.map((r) => [r._id, r.n]));
+    return {
+      total: rows.reduce((sum, r) => sum + r.n, 0),
+      active: byStatus.active ?? 0,
+      pending: byStatus.pending_activation ?? 0,
+      suspended: byStatus.suspended ?? 0,
+    };
+  }
+
+  update(id: string, dto: UpdateUserDto): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(id, { $set: dto }, { new: true })
+      .exec();
+  }
+
+  remove(id: string): Promise<UserDocument | null> {
+    return this.userModel.findByIdAndDelete(id).exec();
+  }
+
+  /**
+   * Devuelve la cuenta al estado «pendiente»: sirve tanto para quien perdió
+   * la contraseña como para quien dejó vencer el plazo de activación. Se le
+   * cierran todas las sesiones, porque quien tenga una abierta ya no debería
+   * seguir dentro mientras se rehace la clave.
+   */
+  reopenActivation(
+    id: string,
+    activationTtlHours: number,
+  ): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            passwordHash: UNUSABLE_PASSWORD_HASH,
+            status: UserStatus.PENDING_ACTIVATION,
+            activationExpiresAt: new Date(
+              Date.now() + activationTtlHours * 3_600_000,
+            ),
+            sessions: [],
+            activatedAt: null,
+            activatedFromIp: null,
+          },
+        },
+        { new: true },
+      )
+      .exec();
+  }
+
+  /**
+   * Cuántos administradores quedarían utilizables si se excluye a uno. Es la
+   * comprobación que impide que el sistema se quede sin nadie que pueda
+   * administrar.
+   */
+  countOtherUsableAdmins(excludeId: string): Promise<number> {
+    return this.userModel
+      .countDocuments({
+        _id: { $ne: excludeId },
+        role: UserRole.ADMIN,
+        status: { $ne: UserStatus.SUSPENDED },
+      })
+      .exec();
+  }
+
+  /**
    * Alta desde la administración: la cuenta existe pero todavía no tiene
    * contraseña. No se guarda cadena vacía sino un hash imposible, para que
    * responda en el mismo tiempo que cualquier otra.
    */
-  createPending(data: {
-    fullName: string;
-    email: string;
-    phone?: string;
-    activationTtlHours: number;
-  }): Promise<UserDocument> {
+  createPending(
+    dto: CreateUserDto,
+    activationTtlHours: number,
+  ): Promise<UserDocument> {
+    if (dto.accessExpiresAt && dto.accessExpiresAt.getTime() < Date.now()) {
+      throw new BadRequestException(
+        'La fecha de vencimiento del acceso ya pasó.',
+      );
+    }
+
     return this.userModel.create({
-      fullName: data.fullName,
-      email: data.email.toLowerCase(),
-      phone: data.phone,
+      fullName: dto.fullName,
+      email: dto.email.toLowerCase(),
+      phone: dto.phone,
+      role: dto.role,
+      accessExpiresAt: dto.accessExpiresAt ?? null,
       passwordHash: UNUSABLE_PASSWORD_HASH,
       status: UserStatus.PENDING_ACTIVATION,
       activationExpiresAt: new Date(
-        Date.now() + data.activationTtlHours * 3_600_000,
+        Date.now() + activationTtlHours * 3_600_000,
       ),
     });
   }
