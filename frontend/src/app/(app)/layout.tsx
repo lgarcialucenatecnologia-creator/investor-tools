@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { AppHeader } from '@/components/app/app-header';
+import { MobileBar } from '@/components/app/mobile-bar';
+import { Sidebar } from '@/components/app/sidebar';
 import { SessionProvider } from '@/components/session/session-provider';
 import { requireSession } from '@/lib/session/server';
 
@@ -16,10 +17,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SessionProvider user={user}>
-      <div className="flex min-h-screen flex-col">
-        <AppHeader />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-12">
-          {children}
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        <MobileBar />
+        <Sidebar />
+        <main className="min-w-0 flex-1 px-6 py-10 lg:h-screen lg:overflow-y-auto lg:px-12 lg:py-14">
+          <div className="mx-auto w-full max-w-4xl">{children}</div>
         </main>
       </div>
     </SessionProvider>
