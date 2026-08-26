@@ -410,7 +410,6 @@ export function OpeningSequence() {
               <p className="gain-fig">+{price(FIGURES.gain)}</p>
               <p className="intro-meta">{COPY.gain}</p>
               <p className="thesis">{COPY.thesis}</p>
-              <p className="disclaimer">{COPY.disclaimer}</p>
             </div>
           )}
 
@@ -423,6 +422,11 @@ export function OpeningSequence() {
           )}
         </div>
       )}
+
+      {/* El rótulo no es decorativo: cubre las cifras del caso Y las ocho
+          ganancias de la rejilla, así que se queda en pantalla desde que
+          aparece la primera hasta el final de la pieza. */}
+      {reached("material") && <p className="disclaimer">{COPY.disclaimer}</p>}
 
       {/* ================= Reveal ================= */}
       {scene === "brand" && (

@@ -41,6 +41,28 @@ export const FIGURES = {
   gainMonths: 3,
 } as const;
 
+/**
+ * Ganancia de cada unidad en la rejilla del Acto 4, en el orden de la
+ * cuadrícula. La primera es la del caso documentado que acaba de mostrarse en
+ * el Acto 3 — así la rejilla arranca de algo que el espectador ya vio, y no de
+ * ocho cifras que aparecen de la nada.
+ *
+ * ⚠️ Ocho ganancias en pantalla es una afirmación mucho mayor que un caso
+ * único. El rótulo del Acto 3 se mantiene visible durante el Acto 4 por eso
+ * mismo. Deben corresponder a operaciones que Luifer pueda sustentar, o
+ * reemplazarse por el "+$" sin cifra que llevaba antes.
+ */
+export const UNIT_GAINS = [
+  34_000_000, // el caso del Acto 3
+  31_500_000,
+  38_000_000,
+  30_800_000,
+  42_500_000,
+  36_200_000,
+  47_000_000,
+  33_400_000,
+] as const;
+
 /** Gastos que llegan por la izquierda y se comen el $. Uno por franja. */
 export const EXPENSES = [
   "arriendo",
@@ -173,7 +195,7 @@ export const MOBILE_UNITS = 4;
 export const DESKTOP_UNITS = 8;
 
 /** Versionada: si el guion cambia, la secuencia vuelve a correr una vez. */
-export const SEEN_KEY = "luifer:intro:v7";
+export const SEEN_KEY = "luifer:intro:v8";
 
 export const COPY = {
   gateTitle: "Pulsa para continuar",

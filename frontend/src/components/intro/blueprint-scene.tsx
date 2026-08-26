@@ -18,7 +18,14 @@
  * normaliza y basta animar dashoffset de 1 a 0.
  */
 
-import { COMPARABLES, COPY, COSTS, FIGURES, type Scene } from "./script";
+import {
+  COMPARABLES,
+  COPY,
+  COSTS,
+  FIGURES,
+  UNIT_GAINS,
+  type Scene,
+} from "./script";
 
 const PLAN_WALLS = [
   "M70.0 33.0 L112.0 33.0 M179.2 33.0 L347.2 33.0 M439.6 33.0 L490.0 33.0",
@@ -122,8 +129,8 @@ const HOUSE_LAYERS: readonly Layer[] = [
  * y sitio para la etiqueta encima de cada unidad.
  */
 const GRIDS = {
-  4: { scale: 0.4, xs: [148, 412], ys: [96, 250] },
-  8: { scale: 0.235, xs: [78, 226, 374, 522], ys: [112, 252] },
+  4: { scale: 0.4, xs: [148, 412], ys: [96, 250], label: 20, lift: 74 },
+  8: { scale: 0.235, xs: [70, 210, 350, 490], ys: [112, 252], label: 15, lift: 44 },
 } as const;
 
 const amount = new Intl.NumberFormat("es-CO");
@@ -262,14 +269,14 @@ export function BlueprintScene({
             <text
               key={`p-${cell.x}-${cell.y}`}
               x={cell.x}
-              y={cell.y - (units === 8 ? 44 : 74)}
+              y={cell.y - grid.lift}
               textAnchor="middle"
-              className="bp-plus"
+              className="bp-plus tabular-nums"
               style={{ animationDelay: `${1200 + i * 190}ms` }}
               fill="var(--color-dorado)"
-              fontSize={units === 8 ? 17 : 22}
+              fontSize={grid.label}
             >
-              +$
+              +{price(UNIT_GAINS[i])}
             </text>
           ))}
       </svg>
