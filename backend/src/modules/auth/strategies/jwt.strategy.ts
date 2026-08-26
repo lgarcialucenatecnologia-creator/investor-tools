@@ -6,6 +6,7 @@ import type {
   AuthenticatedUser,
   JwtPayload,
 } from '../../../common/types/authenticated-user';
+import { assertAccountUsable } from '../../../common/access/account-access';
 import { UsersService } from '../../users/users.service';
 
 @Injectable()
@@ -22,8 +23,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   /**
-   * Se consulta la BD en cada petición para que una cuenta eliminada
-   * deje de tener acceso sin esperar a que expire el token.
+   * Se consulta la BD en cada petición para que una cuenta eliminada deje de
+   * tener acceso sin esperar a que expire el token. Esa consulta ya se paga,
+   * así que se aprovecha para revalidar también el estado de la cuenta: un
+   * administrador que suspenda a alguien lo deja fuera al instante, sin lista
+   * de revocación ni esperar los 15 minutos del token.
    */
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     // Un refresh no sirve como token de acceso aunque los secretos se
@@ -36,6 +40,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!user) {
       throw new UnauthorizedException('Tu sesión ya no es válida.');
     }
+
+    assertAccountUsable(user);
+
     return {
       userId: user.id,
       email: user.email,

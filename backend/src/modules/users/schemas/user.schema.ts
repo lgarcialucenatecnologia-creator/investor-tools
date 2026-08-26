@@ -1,6 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
+/**
+ * Estado de la cuenta. Un solo campo en vez de dos banderas sueltas: la
+ * referencia usa `mustSetPassword` + `isActive`, lo que deja expresable el
+ * estado imposible «ya tiene contraseña pero la contraseña está vacía».
+ */
+export enum UserStatus {
+  /** Dada de alta por un administrador; aún no ha creado su contraseña. */
+  PENDING_ACTIVATION = 'pending_activation',
+  ACTIVE = 'active',
+  /** Acceso pausado por un administrador. Reversible. */
+  SUSPENDED = 'suspended',
+}
+
 export enum UserRole {
   /** Cliente de la plataforma. */
   INVESTOR = 'investor',
@@ -70,6 +83,28 @@ export class User {
 
   @Prop({ type: String, enum: UserRole, default: UserRole.INVESTOR })
   role: UserRole;
+
+  @Prop({
+    type: String,
+    enum: UserStatus,
+    default: UserStatus.ACTIVE,
+    index: true,
+  })
+  status: UserStatus;
+
+  /**
+   * Hasta cuándo vale el acceso. `null` = sin vencimiento.
+   *
+   * ⚠️ Cuando la membresía la escriba el webhook de Hotmart, este valor por
+   * defecto se vuelve peligroso: un webhook que falle en escribir la fecha
+   * deja acceso perpetuo en silencio. Al conectarlo hay que decidir si el
+   * estado inicial pasa a ser «sin membresía» en vez de «sin vencimiento».
+   */
+  @Prop({ type: Date, default: null })
+  accessExpiresAt: Date | null;
+
+  @Prop({ type: Date, default: null })
+  lastLoginAt: Date | null;
 }
 
 export type UserDocument = HydratedDocument<User>;

@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { MongoServerError } from 'mongodb';
 import { Types } from 'mongoose';
+import { assertAccountUsable } from '../../common/access/account-access';
 import type { JwtPayload } from '../../common/types/authenticated-user';
 import { Session, UserDocument } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
@@ -104,6 +105,11 @@ export class AuthService {
       throw new UnauthorizedException('Correo o contraseña incorrectos.');
     }
 
+    // Después de la contraseña, nunca antes: al revés le confirmaría a un
+    // desconocido que ese correo existe y está suspendido o vencido.
+    assertAccountUsable(user);
+
+    await this.usersService.touchLastLogin(user.id);
     return this.issueSession(user, userAgent);
   }
 
@@ -128,6 +134,8 @@ export class AuthService {
     if (!user || !session) {
       throw new UnauthorizedException(SESSION_GONE);
     }
+
+    assertAccountUsable(user);
 
     const presented = hashRefreshToken(refreshToken);
     const isCurrent = hashesMatch(presented, session.tokenHash);

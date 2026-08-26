@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { configuration } from './config/configuration';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -36,6 +37,8 @@ import { UsersModule } from './modules/users/users.module';
   providers: [
     // Todas las rutas exigen JWT salvo las marcadas con @Public()
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    // Va después: necesita el usuario que JwtAuthGuard adjunta a la petición.
+    { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

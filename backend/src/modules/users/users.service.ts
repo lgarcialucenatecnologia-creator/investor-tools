@@ -85,6 +85,12 @@ export class UsersService {
       .exec();
   }
 
+  async touchLastLogin(id: string): Promise<void> {
+    await this.userModel
+      .updateOne({ _id: id }, { $set: { lastLoginAt: new Date() } })
+      .exec();
+  }
+
   /** Cierra una sesión concreta: el resto de dispositivos siguen dentro. */
   async closeSession(userId: string, sid: Types.ObjectId): Promise<void> {
     await this.userModel
