@@ -116,16 +116,16 @@ type Layer = {
 };
 
 const PLAN_LAYERS: readonly Layer[] = [
-  { paths: PLAN_WALLS, offset: 0, step: 180, duration: 800, width: 6 },
-  { paths: PLAN_DOORS, offset: 1500, step: 200, duration: 650, width: 1.2, opacity: 0.9 },
-  { paths: PLAN_FIXTURES, offset: 1900, step: 170, duration: 620, width: 1.2, opacity: 0.8 },
+  { paths: PLAN_WALLS, offset: 0, step: 230, duration: 900, width: 6 },
+  { paths: PLAN_DOORS, offset: 1900, step: 250, duration: 700, width: 1.2, opacity: 0.9 },
+  { paths: PLAN_FIXTURES, offset: 2400, step: 210, duration: 700, width: 1.2, opacity: 0.8 },
 ];
 
 /** El edificio se traza de abajo hacia arriba: estructura, losas, vanos. */
 const BUILDING_LAYERS: readonly Layer[] = [
-  { paths: BUILDING_STRUCTURE, offset: 200, step: 90, duration: 560, width: 2.2 },
-  { paths: BUILDING_FLOORS, offset: 800, step: 110, duration: 480, width: 1.8 },
-  { paths: BUILDING_OPENINGS, offset: 1400, step: 100, duration: 420, width: 1.2, opacity: 0.85 },
+  { paths: BUILDING_STRUCTURE, offset: 200, step: 110, duration: 640, width: 2.2 },
+  { paths: BUILDING_FLOORS, offset: 1000, step: 130, duration: 560, width: 1.8 },
+  { paths: BUILDING_OPENINGS, offset: 1700, step: 110, duration: 480, width: 1.2, opacity: 0.85 },
 ];
 
 /**
@@ -255,7 +255,7 @@ export function BlueprintScene({
               data-on="true"
               style={{
                 transform: `translate(${cell.x}px, ${cell.y}px) scale(${grid.scale}) translate(-280px, -180px)`,
-                transitionDelay: `${i === 0 ? 400 : 900 + (i - 1) * 190}ms`,
+                transitionDelay: `${i === 0 ? 500 : 1000 + (i - 1) * 210}ms`,
               }}
             >
               <g className="bp-faces" data-on="true">
@@ -275,7 +275,7 @@ export function BlueprintScene({
               y={cell.y - grid.lift}
               textAnchor="middle"
               className="bp-plus tabular-nums"
-              style={{ animationDelay: `${1200 + i * 190}ms` }}
+              style={{ animationDelay: `${1400 + i * 210}ms` }}
               fill="var(--color-dorado)"
               fontSize={grid.label}
             >

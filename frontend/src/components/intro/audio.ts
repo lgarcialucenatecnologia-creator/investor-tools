@@ -16,9 +16,8 @@
 
 export type Cue =
   | "tick"
-  | "key"
   | "click"
-  | "fracture"
+  | "sigh"
   | "collapse"
   | "glitch"
   | "draw"
@@ -30,9 +29,13 @@ export type Cue =
 
 export type IntroAudio = {
   cue: (c: Cue) => void;
-  /** Colchón grave sostenido: la tensión mientras la cifra está en pantalla. */
+  /**
+   * Sostenido de los Actos 1 y 2: un la menor abierto, tenue y sin peso.
+   * No es un colchón grave — lo que se está perdiendo es tiempo, no una
+   * máquina lo que ruge.
+   */
   pad: (on: boolean) => void;
-  /** Rumor de oficina de fondo — solo en los Actos 1 y 2. */
+  /** Aire de la sala. Agudo y casi inaudible, nunca un retumbe. */
   ambience: (on: boolean) => void;
   /** Corta absolutamente todo. La ruptura del segundo 22. */
   silence: (on: boolean) => void;
@@ -171,49 +174,61 @@ export function createIntroAudio(): IntroAudio | null {
     };
   }
 
+  /**
+   * La menor con novena: A3 · C4 · E4 · B4. La tercera menor (el C sobre el A)
+   * es lo que lo vuelve triste; la novena lo deja en suspenso en vez de
+   * cerrarlo. Ondas triangulares y filtro suave para que sea tenue y no se
+   * imponga sobre el tic-tac. Cada voz suena más débil que la anterior, así el
+   * agudo apenas se insinúa.
+   */
   const pad = sustained(
     (dest) => {
       const lp = ctx.createBiquadFilter();
       lp.type = "lowpass";
-      lp.frequency.value = 260;
+      lp.frequency.value = 1200;
       dest.connect(lp).connect(master);
-      for (const detune of [-6, 6]) {
+      const voices: [number, number, number][] = [
+        [220.0, 1.0, -3], // A3
+        [261.63, 0.72, 4], // C4 — la tercera menor
+        [329.63, 0.5, -5], // E4
+        [493.88, 0.3, 6], // B4 — la novena
+      ];
+      for (const [freq, level, detune] of voices) {
         const osc = ctx.createOscillator();
-        osc.type = "sawtooth";
-        osc.frequency.value = 55;
+        osc.type = "triangle";
+        osc.frequency.value = freq;
         osc.detune.value = detune;
-        osc.connect(dest);
+        const g = ctx.createGain();
+        g.gain.value = level;
+        osc.connect(g).connect(dest);
         osc.start(ctx.currentTime);
       }
     },
-    0.12,
-    1.6,
-    0.9,
+    0.055,
+    3.0,
+    1.4,
   );
 
+  /**
+   * Aire, no maquinaria. Ruido filtrado por paso-alto: se percibe como el
+   * silencio de una habitación, no como algo que zumba. Antes había un
+   * fluorescente a 120 Hz y ruido grave que retumbaban.
+   */
   const ambience = sustained(
     (dest) => {
-      const lp = ctx.createBiquadFilter();
-      lp.type = "lowpass";
-      lp.frequency.value = 420;
-      dest.connect(lp).connect(master);
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass";
+      hp.frequency.value = 2200;
+      dest.connect(hp).connect(master);
       const src = ctx.createBufferSource();
       src.buffer = noise;
       src.loop = true;
       src.connect(dest);
       src.start(ctx.currentTime);
-      // Zumbido de fluorescente, apenas perceptible pero es lo que da oficina.
-      const hum = ctx.createOscillator();
-      hum.type = "sine";
-      hum.frequency.value = 120;
-      const hg = ctx.createGain();
-      hg.gain.value = 0.16;
-      hum.connect(hg).connect(dest);
-      hum.start(ctx.currentTime);
     },
-    0.05,
-    2.0,
-    0.6,
+    0.022,
+    2.5,
+    0.8,
   );
 
   function cue(c: Cue) {
@@ -221,21 +236,20 @@ export function createIntroAudio(): IntroAudio | null {
       case "tick": // el escape del reloj, alternando tic y tac
         clockTick();
         break;
-      case "key": // tecla de máquina de escribir
-        burst("bandpass", 1900, 5, 0.09, 0.022);
-        burst("lowpass", 420, 1, 0.05, 0.04);
+      case "sigh":
+        // Tercera menor descendente, el gesto del suspiro. Do baja a la.
+        tone(523.25, 0.055, 0.22, 0.5, "triangle");
+        window.setTimeout(() => tone(440.0, 0.05, 0.2, 1.1, "triangle"), 430);
         break;
       case "click": // cada gasto que llega: seco, sin cuerpo, sin apelación
         burst("highpass", 4200, 1, 0.16, 0.016);
         burst("bandpass", 1100, 9, 0.13, 0.03);
         break;
-      case "fracture": // algo que deja de sostenerse
-        tone(110, 0.38, 0.005, 0.85, "sine", 38);
-        burst("lowpass", 700, 1, 0.28, 0.5);
-        break;
-      case "collapse": // el $ tocando el cero
-        tone(150, 0.30, 0.004, 0.9, "sine", 42);
-        burst("lowpass", 380, 1, 0.24, 0.7);
+      case "collapse":
+        // El $ tocando el cero. Cae una octava en vez de golpear: se apaga,
+        // no revienta. El cuerpo grave entra suave, sin transitorio.
+        tone(440, 0.11, 0.03, 1.25, "triangle", 220);
+        tone(110, 0.10, 0.05, 0.95, "sine");
         break;
       case "glitch": // la ruptura: corto y sucio, y después nada
         burst("bandpass", 1600, 0.6, 0.34, 0.12);

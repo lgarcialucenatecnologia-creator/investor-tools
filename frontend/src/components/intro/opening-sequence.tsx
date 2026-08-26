@@ -17,6 +17,7 @@ import { MoneyGlyph, SLAB_COUNT } from "./money-glyph";
 import {
   COPY,
   DESKTOP_UNITS,
+  DRAIN_SCENES,
   EXPENSES,
   FIGURES,
   MOBILE_COMPARABLES,
@@ -132,6 +133,16 @@ export function OpeningSequence() {
     [scene],
   );
 
+  /**
+   * Duración del beat en curso. De acá salen tanto la erosión del $ como el
+   * desfile de clicks: antes vivían en dos tablas distintas y alargar una
+   * escena desincronizaba el sonido de la imagen.
+   */
+  const beatMs = index >= 0 ? (beats[index].ms ?? 0) : 0;
+  const draining = DRAIN_SCENES.includes(scene);
+  // Termina algo antes que el beat, para ver el $ ya devorado un instante.
+  const drainMs = draining ? beatMs * 0.85 : 0;
+
   const totalMs = useMemo(
     () => beats.reduce((sum, b) => sum + (b.ms ?? 0), 0) * factor,
     [beats, factor],
@@ -188,7 +199,7 @@ export function OpeningSequence() {
     if (!a) return;
     if (scene !== "worked" && scene !== "remaining") return;
     a.cue("tick");
-    const period = (scene === "remaining" ? 520 : 880) * factor;
+    const period = (scene === "remaining" ? 560 : 950) * factor;
     const id = window.setInterval(() => a.cue("tick"), period);
     return () => window.clearInterval(id);
   }, [scene, factor]);
@@ -197,16 +208,12 @@ export function OpeningSequence() {
   useEffect(() => {
     const a = audio.current;
     if (!a) return;
-    const drains: Partial<Record<Scene, number>> = {
-      drain: 4000,
-      cycle2: 2000,
-      cycle3: 1000,
-      pension: 2000,
-      hold: 3000,
-    };
-    const drainMs = drains[scene];
-    if (drainMs !== undefined) {
-      const step = (drainMs * factor) / SLAB_COUNT;
+    const parade =
+      draining ? drainMs
+      : scene === "hold" ? beatMs * 0.7
+      : 0;
+    if (parade > 0) {
+      const step = (parade * factor) / SLAB_COUNT;
       const ids = Array.from({ length: SLAB_COUNT }, (_, i) =>
         window.setTimeout(() => a.cue("click"), step * (i + 1)),
       );
@@ -217,7 +224,12 @@ export function OpeningSequence() {
       return () => ids.forEach(window.clearTimeout);
     }
     if (scene === "payday") a.pad(true);
-    if (scene === "zero" || scene === "pensionZero") a.cue("collapse");
+    if (scene === "zero" || scene === "pensionZero") {
+      a.cue("collapse");
+      // El suspiro entra cuando el cero ya está en pantalla, no encima del golpe.
+      const id = window.setTimeout(() => a.cue("sigh"), 700 * factor);
+      return () => window.clearTimeout(id);
+    }
     if (scene === "weeks") a.cue("calc");
     if (scene === "rupture") {
       a.pad(false);
@@ -233,7 +245,7 @@ export function OpeningSequence() {
     if (scene === "material") a.cue("snap");
     if (scene === "method") a.cue("snap");
     if (scene === "brand") a.cue("chime");
-  }, [scene, factor]);
+  }, [scene, factor, draining, drainMs, beatMs]);
 
   useEffect(() => {
     const a = audio.current;
@@ -257,22 +269,15 @@ export function OpeningSequence() {
 
   // ---------- Texto y cifras ----------
   const running = index >= 0;
-  const worked = useTypewriter(COPY.worked, reached("worked"), 46);
+  const worked = useTypewriter(COPY.worked, reached("worked"), 55);
   const remaining = useCountUp(
     FIGURES.daysRemaining,
     reached("remaining"),
-    1500 * factor,
+    2100 * factor,
   );
-  const weeks = useCountUp(FIGURES.weeksPaid, scene === "weeks", 2000 * factor);
-  const otherLine = useTypewriter(COPY.other, reached("other"), 44);
+  const weeks = useCountUp(FIGURES.weeksPaid, scene === "weeks", 2600 * factor);
+  const otherLine = useTypewriter(COPY.other, reached("other"), 52);
 
-  // El $ se erosiona en cinco momentos distintos; cada uno con su ritmo.
-  const drainMs =
-    scene === "drain" ? 4000
-    : scene === "cycle2" ? 2000
-    : scene === "cycle3" ? 1000
-    : scene === "pension" ? 2000
-    : 0;
   const eaten = useDrain(drainMs > 0, drainMs * factor);
   const showGlyph =
     scene === "payday" || scene === "drain" || scene === "cycle2" ||

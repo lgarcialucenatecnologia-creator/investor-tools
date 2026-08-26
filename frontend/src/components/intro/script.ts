@@ -146,34 +146,34 @@ type Beat = {
 };
 
 export const SCRIPT: readonly Beat[] = [
-  // ---- ACTO 1 · 0–13 s ----
-  { scene: "worked", ms: 2000, act: 1 },
-  { scene: "remaining", ms: 2000, act: 1 },
-  { scene: "payday", ms: 1000, act: 1 },
-  { scene: "drain", ms: 4000, act: 1 },
-  { scene: "zero", ms: 1000, act: 1 },
-  { scene: "cycle2", ms: 2000, act: 1 },
-  { scene: "cycle3", ms: 1000, act: 1, skipOnMobile: true },
-  // ---- ACTO 2 · 13–22 s ----
-  { scene: "weeks", ms: 3000, act: 2 },
-  { scene: "jump", ms: 2000, act: 2 },
-  { scene: "pension", ms: 2000, act: 2 },
-  { scene: "pensionZero", ms: 1000, act: 2 },
-  { scene: "verdict", ms: 1000, act: 2 },
-  // ---- RUPTURA · 22–23 s — silencio absoluto ----
-  { scene: "rupture", ms: 1000, act: 2 },
-  // ---- ACTO 3 · 23–37 s ----
-  { scene: "other", ms: 1000, act: 3 },
-  { scene: "plan", ms: 3000, act: 3 },
-  { scene: "lift", ms: 2000, act: 3 },
-  { scene: "listed", ms: 1300, act: 3 },
-  { scene: "comps", ms: 2500, act: 3 },
-  { scene: "costs", ms: 2000, act: 3 },
-  { scene: "material", ms: 2200, act: 3 },
-  // ---- ACTO 4 · 37–46 s ----
-  { scene: "repeat", ms: 3000, act: 4 },
-  { scene: "method", ms: 2000, act: 4 },
-  { scene: "hold", ms: 4000, act: 4 },
+  // ---- ACTO 1 · 0–17.4 s ----
+  { scene: "worked", ms: 2500, act: 1 },
+  { scene: "remaining", ms: 2500, act: 1 },
+  { scene: "payday", ms: 1700, act: 1 },
+  { scene: "drain", ms: 5200, act: 1 },
+  { scene: "zero", ms: 1700, act: 1 },
+  { scene: "cycle2", ms: 2500, act: 1 },
+  { scene: "cycle3", ms: 1300, act: 1, skipOnMobile: true },
+  // ---- ACTO 2 · 17.4–31.3 s ----
+  { scene: "weeks", ms: 3400, act: 2 },
+  { scene: "jump", ms: 2400, act: 2 },
+  { scene: "pension", ms: 2800, act: 2 },
+  { scene: "pensionZero", ms: 1700, act: 2 },
+  { scene: "verdict", ms: 2400, act: 2 }, // la frase tiene que asentarse
+  // ---- RUPTURA · el silencio ----
+  { scene: "rupture", ms: 1200, act: 2 },
+  // ---- ACTO 3 · 32.5–51.6 s ----
+  { scene: "other", ms: 1700, act: 3 },
+  { scene: "plan", ms: 4000, act: 3 },
+  { scene: "lift", ms: 2800, act: 3 },
+  { scene: "listed", ms: 1700, act: 3 },
+  { scene: "comps", ms: 3200, act: 3 },
+  { scene: "costs", ms: 2500, act: 3 },
+  { scene: "material", ms: 3200, act: 3 },
+  // ---- ACTO 4 · 51.6–63.2 s ----
+  { scene: "repeat", ms: 4000, act: 4 },
+  { scene: "method", ms: 2600, act: 4 },
+  { scene: "hold", ms: 5000, act: 4 },
   { scene: "brand", ms: null, act: 4 },
 ] as const;
 
@@ -189,13 +189,25 @@ export const ORDER: readonly Scene[] = [
  * un ciclo menos en el Acto 1, dos comparables en vez de cuatro y cuatro
  * unidades en vez de ocho.
  */
-export const MOBILE_FACTOR = 0.66;
+export const MOBILE_FACTOR = 0.52;
+/**
+ * Escenas donde los gastos desfilan. La duración de cada desfile sale del
+ * propio beat, no de una tabla aparte: si un beat se alarga, el sonido y la
+ * erosión se alargan con él sin que haya que acordarse de dos sitios.
+ */
+export const DRAIN_SCENES: readonly Scene[] = [
+  "drain",
+  "cycle2",
+  "cycle3",
+  "pension",
+];
+
 export const MOBILE_COMPARABLES = 2;
 export const MOBILE_UNITS = 4;
 export const DESKTOP_UNITS = 8;
 
 /** Versionada: si el guion cambia, la secuencia vuelve a correr una vez. */
-export const SEEN_KEY = "luifer:intro:v9";
+export const SEEN_KEY = "luifer:intro:v10";
 
 export const COPY = {
   gateTitle: "Pulsa para continuar",
