@@ -30,10 +30,16 @@ export const metadata: Metadata = {
 
 // Corre en el primer frame, antes de que React monte la Secuencia de Apertura:
 // marca el documento como pendiente para que el CSS pinte un escudo obsidiana
-// y el visitante no alcance a ver la landing por debajo. Quien ya la vio, o
-// pidió menos movimiento, entra directo al sitio.
+// y el visitante no alcance a ver nada por debajo. Quien ya la vio, o pidió
+// menos movimiento, entra directo.
+//
+// La comprobación de la ruta es indispensable: la secuencia sólo existe en la
+// portada, pero el escudo lo pinta el CSS a partir de este atributo. Sin este
+// filtro, quien abriera /login sin haber visto la intro se encontraba una
+// pantalla negra sin scroll y sin nada que la quitara.
 const introGuard = `try{
-  if(!localStorage.getItem(${JSON.stringify(SEEN_KEY)})
+  if(location.pathname === "/"
+     && !localStorage.getItem(${JSON.stringify(SEEN_KEY)})
      && !matchMedia("(prefers-reduced-motion: reduce)").matches){
     document.documentElement.dataset.intro="pending";
   }

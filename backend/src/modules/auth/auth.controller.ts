@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Post,
@@ -18,6 +19,12 @@ import { RegisterDto } from './dto/register.dto';
 /** Límite estricto para las rutas que aceptan credenciales. */
 const CREDENTIAL_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
 
+/**
+ * El refresh no lleva credenciales pero sí se llama solo, desde varias
+ * pestañas, así que necesita un cupo más holgado que el login.
+ */
+const REFRESH_THROTTLE = { default: { limit: 20, ttl: 60_000 } };
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -25,19 +32,20 @@ export class AuthController {
   @Public()
   @Throttle(CREDENTIAL_THROTTLE)
   @Post('register')
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  register(@Body() dto: RegisterDto, @Headers('user-agent') ua?: string) {
+    return this.authService.register(dto, ua);
   }
 
   @Public()
   @Throttle(CREDENTIAL_THROTTLE)
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  login(@Body() dto: LoginDto, @Headers('user-agent') ua?: string) {
+    return this.authService.login(dto, ua);
   }
 
   @Public()
+  @Throttle(REFRESH_THROTTLE)
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
   refresh(@Body() dto: RefreshDto) {
@@ -47,7 +55,7 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post('logout')
   async logout(@CurrentUser() user: AuthenticatedUser): Promise<void> {
-    await this.authService.logout(user.userId);
+    await this.authService.logout(user.userId, user.sessionId);
   }
 
   @Get('me')

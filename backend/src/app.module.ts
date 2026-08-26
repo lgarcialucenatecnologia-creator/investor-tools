@@ -17,7 +17,19 @@ import { UsersModule } from './modules/users/users.module';
         uri: config.getOrThrow<string>('mongodb.uri'),
       }),
     }),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
+    /**
+     * El contador va por IP real. Con `trust proxy` configurado en main.ts,
+     * `req.ips` trae la cadena de X-Forwarded-For y el primer elemento es el
+     * cliente; sin proxy delante, `req.ips` viene vacío y se usa `req.ip`.
+     */
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: () => ({
+        throttlers: [{ ttl: 60_000, limit: 60 }],
+        getTracker: (req: { ips?: string[]; ip?: string }) =>
+          Promise.resolve(req.ips?.[0] ?? req.ip ?? 'desconocido'),
+      }),
+    }),
     UsersModule,
     AuthModule,
   ],

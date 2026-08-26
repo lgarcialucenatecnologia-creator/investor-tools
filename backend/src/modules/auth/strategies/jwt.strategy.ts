@@ -26,10 +26,21 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
    * deje de tener acceso sin esperar a que expire el token.
    */
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
+    // Un refresh no sirve como token de acceso aunque los secretos se
+    // hubieran configurado iguales por error.
+    if (payload.typ !== 'access') {
+      throw new UnauthorizedException('Tu sesión ya no es válida.');
+    }
+
     const user = await this.usersService.findById(payload.sub);
     if (!user) {
       throw new UnauthorizedException('Tu sesión ya no es válida.');
     }
-    return { userId: user.id, email: user.email, role: user.role };
+    return {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      sessionId: payload.sid,
+    };
   }
 }

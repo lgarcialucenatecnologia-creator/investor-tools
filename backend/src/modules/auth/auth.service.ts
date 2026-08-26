@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -7,16 +8,20 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { SignOptions } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { MongoServerError } from 'mongodb';
+import { Types } from 'mongoose';
 import type { JwtPayload } from '../../common/types/authenticated-user';
-import { UserDocument } from '../users/schemas/user.schema';
+import { Session, UserDocument } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
 const SALT_ROUNDS = 12;
 const DUPLICATE_KEY = 11000;
+
+/** Mensaje único para todo fallo de sesión: no revela en qué falló. */
+const SESSION_GONE = 'Tu sesión expiró. Inicia sesión de nuevo.';
 
 /**
  * Hash de descarte con el que se compara cuando el correo no existe, para
@@ -35,7 +40,8 @@ function hashRefreshToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
-function hashesMatch(a: string, b: string): boolean {
+function hashesMatch(a: string, b: string | null): boolean {
+  if (!b) return false;
   const bufferA = Buffer.from(a, 'hex');
   const bufferB = Buffer.from(b, 'hex');
   return bufferA.length === bufferB.length && timingSafeEqual(bufferA, bufferB);
@@ -58,7 +64,15 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthResult> {
+  async register(dto: RegisterDto, userAgent?: string): Promise<AuthResult> {
+    if (!this.config.getOrThrow<boolean>('selfRegistrationEnabled')) {
+      // El acceso lo da el asesor tras la compra. La puerta pública queda
+      // cerrada salvo que se abra a propósito por variable de entorno.
+      throw new ForbiddenException(
+        'Las cuentas se crean desde la administración. Escríbenos para activar la tuya.',
+      );
+    }
+
     const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
     try {
@@ -68,7 +82,7 @@ export class AuthService {
         passwordHash,
         phone: dto.phone,
       });
-      return this.issueSession(user);
+      return this.issueSession(user, userAgent);
     } catch (error) {
       // El índice único de `email` es la única fuente de verdad ante
       // registros simultáneos con el mismo correo.
@@ -79,7 +93,7 @@ export class AuthService {
     }
   }
 
-  async login(dto: LoginDto): Promise<AuthResult> {
+  async login(dto: LoginDto, userAgent?: string): Promise<AuthResult> {
     const user = await this.usersService.findByEmailWithPassword(dto.email);
     const passwordMatches = await bcrypt.compare(
       dto.password,
@@ -90,7 +104,7 @@ export class AuthService {
       throw new UnauthorizedException('Correo o contraseña incorrectos.');
     }
 
-    return this.issueSession(user);
+    return this.issueSession(user, userAgent);
   }
 
   async refresh(refreshToken: string): Promise<AuthTokens> {
@@ -100,36 +114,73 @@ export class AuthService {
         secret: this.config.getOrThrow<string>('jwt.refreshSecret'),
       });
     } catch {
-      throw new UnauthorizedException(
-        'Tu sesión expiró. Inicia sesión de nuevo.',
-      );
+      throw new UnauthorizedException(SESSION_GONE);
     }
 
-    const user = await this.usersService.findByIdWithRefreshToken(payload.sub);
-    if (!user?.refreshTokenHash) {
-      throw new UnauthorizedException(
-        'Tu sesión expiró. Inicia sesión de nuevo.',
-      );
+    if (payload.typ !== 'refresh') {
+      throw new UnauthorizedException(SESSION_GONE);
     }
 
-    if (!hashesMatch(hashRefreshToken(refreshToken), user.refreshTokenHash)) {
-      // El JWT es válido pero no es el vigente: se asume reutilización de un
-      // token ya rotado y se cierra la sesión por completo.
-      await this.usersService.setRefreshTokenHash(user.id, null);
-      throw new UnauthorizedException(
-        'Tu sesión expiró. Inicia sesión de nuevo.',
-      );
+    const user = await this.usersService.findByIdWithSessions(payload.sub);
+    const session = user?.sessions.find(
+      (s) => s.sid.toString() === payload.sid,
+    );
+    if (!user || !session) {
+      throw new UnauthorizedException(SESSION_GONE);
     }
 
-    return this.rotateTokens(user);
+    const presented = hashRefreshToken(refreshToken);
+    const isCurrent = hashesMatch(presented, session.tokenHash);
+    const graceOpen =
+      session.previousValidUntil !== null &&
+      session.previousValidUntil.getTime() > Date.now();
+    const isRecentlyRotated =
+      graceOpen && hashesMatch(presented, session.previousHash);
+
+    if (!isCurrent && !isRecentlyRotated) {
+      /**
+       * El JWT es válido, pertenece a esta sesión, pero no es ni el vigente
+       * ni el que acaba de rotarse. Eso ya no se explica por dos pestañas:
+       * se asume reutilización de un token robado y se cierran TODAS las
+       * sesiones del usuario, no solo esta.
+       */
+      await this.usersService.closeAllSessions(user.id);
+      throw new UnauthorizedException(SESSION_GONE);
+    }
+
+    return this.rotateTokens(user, session.sid);
   }
 
-  async logout(userId: string): Promise<void> {
-    await this.usersService.setRefreshTokenHash(userId, null);
+  /** Cierra solo el dispositivo desde el que se pidió. */
+  async logout(userId: string, sessionId: string): Promise<void> {
+    if (!Types.ObjectId.isValid(sessionId)) return;
+    await this.usersService.closeSession(userId, new Types.ObjectId(sessionId));
   }
 
-  private async issueSession(user: UserDocument): Promise<AuthResult> {
-    const tokens = await this.rotateTokens(user);
+  private async issueSession(
+    user: UserDocument,
+    userAgent?: string,
+  ): Promise<AuthResult> {
+    const sid = new Types.ObjectId();
+    const now = new Date();
+    const tokens = await this.signPair(user, sid);
+
+    const session: Session = {
+      sid,
+      tokenHash: hashRefreshToken(tokens.refreshToken),
+      previousHash: null,
+      previousValidUntil: null,
+      userAgent: userAgent?.slice(0, 200),
+      createdAt: now,
+      lastUsedAt: now,
+    };
+
+    await this.usersService.openSession(
+      user.id,
+      session,
+      this.config.getOrThrow<number>('session.maxPerUser'),
+    );
+
     return {
       ...tokens,
       user: {
@@ -141,28 +192,55 @@ export class AuthService {
     };
   }
 
-  private async rotateTokens(user: UserDocument): Promise<AuthTokens> {
-    const payload: JwtPayload = { sub: user.id, email: user.email };
+  private async rotateTokens(
+    user: UserDocument,
+    sid: Types.ObjectId,
+  ): Promise<AuthTokens> {
+    const tokens = await this.signPair(user, sid);
+    const graceMs = this.config.getOrThrow<number>('session.rotationGraceMs');
+
+    // El hash saliente sigue valiendo un rato: es lo que evita que la
+    // segunda pestaña, que refrescó a la vez, sea tomada por un ladrón.
+    const outgoing = user.sessions.find((s) => s.sid.equals(sid))?.tokenHash;
+    await this.usersService.rotateSession(
+      user.id,
+      sid,
+      hashRefreshToken(tokens.refreshToken),
+      outgoing ?? '',
+      new Date(Date.now() + graceMs),
+    );
+
+    return tokens;
+  }
+
+  private async signPair(
+    user: UserDocument,
+    sid: Types.ObjectId,
+  ): Promise<AuthTokens> {
+    const base = { sub: user.id, email: user.email, sid: sid.toString() };
 
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        secret: this.config.getOrThrow<string>('jwt.accessSecret'),
-        expiresIn: this.config.getOrThrow<string>(
-          'jwt.accessTtl',
-        ) as SignOptions['expiresIn'],
-      }),
-      this.jwtService.signAsync(payload, {
-        secret: this.config.getOrThrow<string>('jwt.refreshSecret'),
-        expiresIn: this.config.getOrThrow<string>(
-          'jwt.refreshTtl',
-        ) as SignOptions['expiresIn'],
-      }),
+      this.jwtService.signAsync(
+        { ...base, typ: 'access' } satisfies JwtPayload,
+        {
+          secret: this.config.getOrThrow<string>('jwt.accessSecret'),
+          expiresIn: this.config.getOrThrow<string>(
+            'jwt.accessTtl',
+          ) as SignOptions['expiresIn'],
+        },
+      ),
+      // El `jti` es indispensable, no decorativo: sin él dos refrescos en el
+      // mismo segundo devuelven el mismo token y la rotación no rota nada.
+      this.jwtService.signAsync(
+        { ...base, typ: 'refresh', jti: randomUUID() } satisfies JwtPayload,
+        {
+          secret: this.config.getOrThrow<string>('jwt.refreshSecret'),
+          expiresIn: this.config.getOrThrow<string>(
+            'jwt.refreshTtl',
+          ) as SignOptions['expiresIn'],
+        },
+      ),
     ]);
-
-    await this.usersService.setRefreshTokenHash(
-      user.id,
-      hashRefreshToken(refreshToken),
-    );
 
     return { accessToken, refreshToken };
   }
