@@ -8,11 +8,17 @@
  * salen tanto el hueco del muro como la marca de carpintería: un muro dibujado
  * en sentido inverso no puede desalinearlos.
  *
- * La casa no está dibujada a ojo: son las aristas de un volumen de 10 x 7 x 4 m
- * con cumbrera a 6.6 m, proyectadas en perspectiva de dos puntos (giro 34°,
- * cámara a 2.3 m y 27 m de distancia). Por eso las verticales quedan verticales
- * y las fugas son consistentes. Las caras del relleno salen de la misma
- * proyección, así que encajan con el trazo sin ajuste manual.
+ * De la planta se levanta el edificio que la contiene: cinco plantas iguales
+ * apiladas sobre la misma huella de 10 x 7 m. Que sea un edificio y no una casa
+ * no es un capricho — la planta es un apartamento, y ver cómo se repite cinco
+ * veces hacia arriba cuenta la repetición antes de que la rejilla la repita
+ * otra vez.
+ *
+ * No está dibujado a ojo: son las aristas del volumen proyectadas en
+ * perspectiva de dos puntos (giro 34°, cámara a 7.2 m de altura y 43 m de
+ * distancia). Por eso las verticales quedan verticales y las fugas son
+ * consistentes. Las caras del relleno salen de la misma proyección, así que
+ * encajan con el trazo sin ajuste manual.
  *
  * Cada trazo es un polígono cerrado con `pathLength={1}`: el dasharray se
  * normaliza y basta animar dashoffset de 1 a 0.
@@ -50,37 +56,35 @@ const PLAN_FIXTURES = [
   "M93.1 278.7 L185.5 278.7 L185.5 314.4 L93.1 314.4 Z M93.1 303.9 L185.5 303.9 M114.1 232.5 L160.3 232.5 L160.3 259.8 L114.1 259.8 Z M231.7 217.8 L298.9 217.8 L298.9 257.7 L231.7 257.7 Z M235.9 203.1 L261.1 203.1 L261.1 215.7 L235.9 215.7 Z M269.5 203.1 L294.7 203.1 L294.7 215.7 L269.5 215.7 Z M235.9 259.8 L261.1 259.8 L261.1 272.4 L235.9 272.4 Z M269.5 259.8 L294.7 259.8 L294.7 272.4 L269.5 272.4 Z",
 ] as const;
 
-const HOUSE_STRUCTURE = [
-  "M176.5 321.9 L501.9 299.8 L344.0 284.8 L55.7 299.1 Z",
-  "M176.5 136.5 L501.9 152.9 L344.0 164.0 L55.7 153.4 Z",
-  "M176.5 321.9 L176.5 136.5",
-  "M501.9 299.8 L501.9 152.9",
-  "M344.0 284.8 L344.0 164.0",
-  "M55.7 299.1 L55.7 153.4",
+const BUILDING_STRUCTURE = [
+  "M239.5 318.0 L377.4 300.7 L310.6 287.0 L182.6 300.2 Z",
+  "M239.5 42.0 L377.4 60.7 L310.6 75.6 L182.6 61.3 Z",
+  "M239.5 318.0 L239.5 42.0",
+  "M377.4 300.7 L377.4 60.7",
+  "M310.6 287.0 L310.6 75.6",
+  "M182.6 300.2 L182.6 61.3",
 ] as const;
 
-const HOUSE_ROOF = [
-  "M91.7 38.1 L426.4 74.0",
-  "M167.7 134.2 L91.7 38.1 L34.0 153.7",
-  "M526.0 152.6 L426.4 74.0 L346.4 165.0",
-  "M167.7 134.2 L526.0 152.6",
-  "M34.0 153.7 L346.4 165.0",
+const BUILDING_FLOORS = [
+  "M239.5 265.6 L377.4 255.1 L310.6 246.8 L182.6 254.8 Z",
+  "M239.5 213.1 L377.4 209.5 L310.6 206.7 L182.6 209.4 Z",
+  "M239.5 160.7 L377.4 163.9 L310.6 166.5 L182.6 164.0 Z",
+  "M239.5 108.2 L377.4 118.3 L310.6 126.3 L182.6 118.6 Z",
+  "M239.5 55.8 L377.4 72.7 L310.6 86.2 L182.6 73.3 Z",
 ] as const;
 
-const HOUSE_OPENINGS = [
-  "M328.6 311.6 L386.4 307.6 L386.4 207.3 L328.6 207.0 Z",
-  "M220.4 260.4 L287.2 258.4 L287.2 180.9 L220.4 179.3 Z",
-  "M422.4 254.4 L472.9 252.9 L472.9 185.3 L422.4 184.1 Z",
-  "M151.3 259.6 L121.1 257.1 L121.1 181.9 L151.3 179.9 Z",
-  "M97.2 255.2 L72.6 253.1 L72.6 185.1 L97.2 183.5 Z",
-  "M126.5 126.6 L92.4 132.5 L92.4 85.2 L126.5 75.9 Z",
+const BUILDING_OPENINGS = [
+  "M299.3 310.5 L326.8 307.1 L326.8 265.7 L299.3 268.0 Z M252.0 299.2 L282.1 295.9 L282.1 271.2 L252.0 273.7 Z M342.6 289.3 L367.7 286.6 L367.7 263.9 L342.6 266.1 Z M229.4 297.8 L213.9 293.6 L213.9 269.4 L229.4 272.6 Z M204.2 290.9 L190.5 287.2 L190.5 264.4 L204.2 267.3 Z",
+  "M297.9 244.6 L328.1 242.8 L328.1 219.2 L297.9 220.3 Z M252.0 247.3 L282.1 245.6 L282.1 220.8 L252.0 221.9 Z M342.6 242.0 L367.7 240.5 L367.7 217.9 L342.6 218.7 Z M229.4 246.6 L213.9 244.3 L213.9 220.1 L229.4 221.4 Z M204.2 242.9 L190.5 240.8 L190.5 218.1 L204.2 219.2 Z",
+  "M297.9 195.1 L328.1 194.8 L328.1 171.2 L297.9 170.7 Z M252.0 195.5 L282.1 195.2 L282.1 170.5 L252.0 170.1 Z M342.6 194.7 L367.7 194.4 L367.7 171.8 L342.6 171.4 Z M229.4 195.4 L213.9 195.0 L213.9 170.8 L229.4 170.3 Z M204.2 194.8 L190.5 194.5 L190.5 171.7 L204.2 171.2 Z",
+  "M297.9 145.5 L328.1 146.7 L328.1 123.1 L297.9 121.2 Z M252.0 143.7 L282.1 144.9 L282.1 120.2 L252.0 118.2 Z M342.6 147.3 L367.7 148.3 L367.7 125.7 L342.6 124.1 Z M229.4 144.2 L213.9 145.8 L213.9 121.6 L229.4 119.1 Z M204.2 146.7 L190.5 148.1 L190.5 125.3 L204.2 123.1 Z",
+  "M297.9 96.0 L328.1 98.7 L328.1 75.1 L297.9 71.7 Z M252.0 91.9 L282.1 94.6 L282.1 69.9 L252.0 66.4 Z M342.6 100.0 L367.7 102.2 L367.7 79.6 L342.6 76.7 Z M229.4 93.0 L213.9 96.5 L213.9 72.3 L229.4 67.9 Z M204.2 98.7 L190.5 101.7 L190.5 79.0 L204.2 75.1 Z",
 ] as const;
 
-const HOUSE_FACES = [
-  { d: "M176.5 321.9 L501.9 299.8 L501.9 152.9 L176.5 136.5 Z", light: 0.2 }, // frente
-  { d: "M176.5 321.9 L55.7 299.1 L55.7 153.4 L176.5 136.5 Z", light: 0.11 }, // costado
-  { d: "M167.7 134.2 L526.0 152.6 L426.4 74.0 L91.7 38.1 Z", light: 0.28 }, // cubierta
-  { d: "M167.7 134.2 L91.7 38.1 L34.0 153.7 Z", light: 0.15 }, // gablete
+const BUILDING_FACES = [
+  { d: "M239.5 318.0 L377.4 300.7 L377.4 60.7 L239.5 42.0 Z", light: 0.19 }, // frente
+  { d: "M239.5 318.0 L182.6 300.2 L182.6 61.3 L239.5 42.0 Z", light: 0.1 }, // costado
+  { d: "M239.5 42.0 L377.4 60.7 L310.6 75.6 L182.6 61.3 Z", light: 0.3 }, // cubierta
 ] as const;
 
 /** Etapas del pliego, en el orden en que ocurren. */
@@ -117,10 +121,11 @@ const PLAN_LAYERS: readonly Layer[] = [
   { paths: PLAN_FIXTURES, offset: 1900, step: 170, duration: 620, width: 1.2, opacity: 0.8 },
 ];
 
-const HOUSE_LAYERS: readonly Layer[] = [
-  { paths: HOUSE_STRUCTURE, offset: 200, step: 90, duration: 560, width: 2.2 },
-  { paths: HOUSE_ROOF, offset: 900, step: 90, duration: 520, width: 2.2 },
-  { paths: HOUSE_OPENINGS, offset: 1400, step: 70, duration: 440, width: 1.3, opacity: 0.85 },
+/** El edificio se traza de abajo hacia arriba: estructura, losas, vanos. */
+const BUILDING_LAYERS: readonly Layer[] = [
+  { paths: BUILDING_STRUCTURE, offset: 200, step: 90, duration: 560, width: 2.2 },
+  { paths: BUILDING_FLOORS, offset: 800, step: 110, duration: 480, width: 1.8 },
+  { paths: BUILDING_OPENINGS, offset: 1400, step: 100, duration: 420, width: 1.2, opacity: 0.85 },
 ];
 
 /**
@@ -129,8 +134,8 @@ const HOUSE_LAYERS: readonly Layer[] = [
  * y sitio para la etiqueta encima de cada unidad.
  */
 const GRIDS = {
-  4: { scale: 0.4, xs: [148, 412], ys: [96, 250], label: 20, lift: 74 },
-  8: { scale: 0.235, xs: [70, 210, 350, 490], ys: [112, 252], label: 15, lift: 44 },
+  4: { scale: 0.42, xs: [148, 412], ys: [100, 250], label: 20, lift: 70 },
+  8: { scale: 0.3, xs: [70, 210, 350, 490], ys: [115, 260], label: 15, lift: 52 },
 } as const;
 
 const amount = new Intl.NumberFormat("es-CO");
@@ -224,23 +229,21 @@ export function BlueprintScene({
 
         {/* El volumen se corre a la izquierda cuando entran las cotas, para
             dejarles la mitad derecha del pliego. */}
-        <g className="bp-body" data-aside={asideways ? "true" : "false"}>
-          {stage !== "grid" && (
-            <>
-              <g className="bp-faces" data-on={stage === "material" ? "true" : "false"}>
-                {HOUSE_FACES.map((face) => (
-                  <path
-                    key={face.d}
-                    d={face.d}
-                    fill="var(--color-marfil)"
-                    opacity={face.light}
-                  />
-                ))}
-              </g>
-              <Strokes layers={HOUSE_LAYERS} on={built} />
-            </>
-          )}
-        </g>
+        {built && stage !== "grid" && (
+          <g className="bp-body" data-aside={asideways ? "true" : "false"}>
+            <g className="bp-faces" data-on={stage === "material" ? "true" : "false"}>
+              {BUILDING_FACES.map((face) => (
+                <path
+                  key={face.d}
+                  d={face.d}
+                  fill="var(--color-marfil)"
+                  opacity={face.light}
+                />
+              ))}
+            </g>
+            <Strokes layers={BUILDING_LAYERS} on={built} />
+          </g>
+        )}
 
         {/* La repetición: la primera unidad viaja a su celda, las demás entran
             ya dibujadas. Cada una suelta un +$ hacia arriba. */}
@@ -256,11 +259,11 @@ export function BlueprintScene({
               }}
             >
               <g className="bp-faces" data-on="true">
-                {HOUSE_FACES.map((face) => (
+                {BUILDING_FACES.map((face) => (
                   <path key={face.d} d={face.d} fill="var(--color-marfil)" opacity={face.light} />
                 ))}
               </g>
-              <Strokes layers={HOUSE_LAYERS} on solid />
+              <Strokes layers={BUILDING_LAYERS} on solid />
             </g>
           ))}
 

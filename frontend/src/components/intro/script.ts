@@ -54,13 +54,13 @@ export const FIGURES = {
  */
 export const UNIT_GAINS = [
   34_000_000, // el caso del Acto 3
-  31_500_000,
-  38_000_000,
-  30_800_000,
-  42_500_000,
-  36_200_000,
+  42_000_000,
+  61_000_000,
+  38_500_000,
   47_000_000,
-  33_400_000,
+  64_500_000,
+  43_800_000,
+  58_000_000,
 ] as const;
 
 /** Gastos que llegan por la izquierda y se comen el $. Uno por franja. */
@@ -195,7 +195,7 @@ export const MOBILE_UNITS = 4;
 export const DESKTOP_UNITS = 8;
 
 /** Versionada: si el guion cambia, la secuencia vuelve a correr una vez. */
-export const SEEN_KEY = "luifer:intro:v8";
+export const SEEN_KEY = "luifer:intro:v9";
 
 export const COPY = {
   gateTitle: "Pulsa para continuar",
