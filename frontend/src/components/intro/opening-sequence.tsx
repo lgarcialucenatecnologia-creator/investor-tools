@@ -334,8 +334,8 @@ export function OpeningSequence() {
               {COPY.remaining}{" "}
               <span className="tabular-nums intro-accent">
                 {decimal.format(remaining)}
-              </span>
-              .
+              </span>{" "}
+              {COPY.remainingTail}
             </p>
           )}
         </div>
@@ -365,15 +365,20 @@ export function OpeningSequence() {
             ))}
           </ul>
           {scene === "hold" && (
-            <ul className="gains">
-              {Array.from({ length: mobile ? MOBILE_UNITS : DESKTOP_UNITS }).map(
-                (_, i) => (
+            <>
+              <ul className="gains">
+                {Array.from({
+                  length: mobile ? MOBILE_UNITS : DESKTOP_UNITS,
+                }).map((_, i) => (
                   <li key={i} style={{ animationDelay: `${900 + i * 170}ms` }}>
                     +$
                   </li>
-                ),
-              )}
-            </ul>
+                ))}
+              </ul>
+              {/* El remate entra cuando el $ ya aguantó y las ganancias se
+                  apilaron: antes sería una promesa, aquí es una conclusión. */}
+              <p className="hold-line">{COPY.holdLine}</p>
+            </>
           )}
         </div>
       )}

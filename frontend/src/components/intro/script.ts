@@ -148,7 +148,7 @@ type Beat = {
 export const SCRIPT: readonly Beat[] = [
   // ---- ACTO 1 ----
   { scene: "worked", ms: 2500, act: 1 },
-  { scene: "remaining", ms: 2500, act: 1 },
+  { scene: "remaining", ms: 3400, act: 1 }, // la frase creció
   { scene: "payday", ms: 1700, act: 1 },
   { scene: "drain", ms: 5200, act: 1 },
   { scene: "zero", ms: 1700, act: 1 },
@@ -159,11 +159,11 @@ export const SCRIPT: readonly Beat[] = [
   { scene: "jump", ms: 2400, act: 2 },
   { scene: "pension", ms: 2800, act: 2 },
   { scene: "pensionZero", ms: 1700, act: 2 },
-  { scene: "verdict", ms: 2400, act: 2 }, // la frase tiene que asentarse
+  { scene: "verdict", ms: 3400, act: 2 }, // 88 caracteres que hay que leer
   // ---- RUPTURA · el silencio ----
   { scene: "rupture", ms: 1200, act: 2 },
   // ---- ACTO 3 ----
-  { scene: "other", ms: 1700, act: 3 },
+  { scene: "other", ms: 3000, act: 3 }, // se escribe a máquina: 2.6 s
   { scene: "plan", ms: 4000, act: 3 },
   { scene: "lift", ms: 4000, act: 3 },
   { scene: "listed", ms: 1700, act: 3 },
@@ -217,16 +217,23 @@ export const COPY = {
   unmute: "Activar sonido",
 
   worked: "Llevas 4.380 días trabajando.",
-  remaining: "Te faltan",
+  remaining: "Y el sistema no te suelta hasta dentro de",
+  remainingTail: "más.",
   payday: "Día 30. El sistema te paga.",
   paydayShort: "Día 30.",
 
   weeks: "semanas cotizadas",
-  jump: "Y cuando lleguen las 1.300…",
+  jump: "Y cuando por fin lleguen las 1.300…",
   pension: "PENSIÓN",
-  verdict: "El sistema no tiene otro final. Tiene el mismo, más tarde.",
+  /**
+   * El giro del Acto 2. No es que el sistema pague poco: es que cobra los
+   * años en que uno todavía puede disfrutarlo. Ahí está la diferencia entre
+   * pensionarse y pensionarse temprano.
+   */
+  verdict:
+    "El sistema no tiene otro final. Tiene el mismo — y te cobra tus mejores años por llegar.",
 
-  other: "Hay otra forma de pensionarse.",
+  other: "Hay otra forma. Y no te pide esperar toda la vida.",
   /**
    * Las dos líneas del trazado. La primera señala lo que hay en pantalla y le
    * da la vuelta: no es que falte todo por construir, es que ese dibujo ya
@@ -250,8 +257,15 @@ export const COPY = {
   thesis: "Eso no se ganó vendiendo. Se ganó comprando.",
 
   repeat: "Y se repite.",
+  /**
+   * El remate, justo cuando el $ aguanta por primera vez. Es donde aterriza
+   * «temprano»: no se afirma ninguna edad, se afirma que la espera no era
+   * necesaria.
+   */
+  holdLine: "Y no tuviste que esperar a envejecer.",
   method: "MÉTODO GANAR AL COMPRAR",
   brand: "Pensionate con Bienes Raíces",
-  tagline: "La ganancia empieza en la compra.",
+  tagline:
+    "La libertad no llega con la edad. Llega cuando el ingreso deja de depender de ti.",
   cta: "Entrar",
 } as const;

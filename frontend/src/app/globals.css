@@ -430,6 +430,20 @@ html[data-intro="pending"] body::before {
   animation: intro-rise 500ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
 }
 
+/* El remate del Acto 4. Espera a que la pila de ganancias termine de
+   formarse, para que se lea como consecuencia y no como anuncio. */
+.hold-line {
+  position: absolute;
+  top: calc(100% + 1.75rem);
+  width: max(20rem, 100%);
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 2.4vw, 1.6rem);
+  line-height: 1.35;
+  color: var(--ink);
+  opacity: 0;
+  animation: intro-rise 700ms cubic-bezier(0.2, 0.7, 0.3, 1) 2400ms forwards;
+}
+
 /* ---------- Acto 2: la barra de cotización ---------- */
 .gauge {
   display: block;
@@ -862,6 +876,7 @@ html[data-intro="pending"] body::before {
   .intro-root[data-rupture="true"],
   .intro-caret,
   .intro-rise,
+  .hold-line,
   .bp-draw,
   .bp-plus,
   .gains li,
