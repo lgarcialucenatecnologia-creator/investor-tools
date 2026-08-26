@@ -1,0 +1,511 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   Paleta "Luisfer García" — fuente única de verdad
+   Concepto: inversión inmobiliaria · autoridad · lujo sobrio
+   Proporción: 60% oscuros · 20% marfil · 15% dorado · 5% acento
+   ============================================================ */
+
+@theme {
+  /* --- Fondos (60%) --- */
+  --color-obsidiana: #0c0812; /* Negro Obsidiana — fondo principal */
+  --color-nocturno: #1a1125; /* Violeta Nocturno — cards, contenedores */
+
+  /* --- Dorado (15%) — reservado para valor real: CTAs y resultados --- */
+  --color-dorado: #d7a72e; /* Dorado Inversión — títulos, CTAs */
+  --color-oro: #f2c85b; /* Oro Luminoso — SOLO el resultado clave (el Índice) */
+
+  /* --- Texto (20%) --- */
+  --color-marfil: #f4f1eb; /* Blanco Marfil — copy largo. NUNCA blanco puro */
+
+  /* --- Superficie técnica: el plano arquitectónico --- */
+  --color-plano: #1e3a8a; /* Azul Plano — superficie de blueprint */
+  --color-plano-hondo: #16306f; /* Profundidad del pliego, viñeta y retícula */
+
+  /* --- Secundarios (5%) --- */
+  --color-grafito: #747078; /* Gris Grafito de marca — bordes y decoración */
+  --color-grafito-texto: #807c84; /* Variante legible para metadata/fechas */
+  --color-azul: #0a6680; /* Azul Tecnológico — acento del Consultor Luifer */
+
+  /* --- Funcional: solo para errores, en tono calmado --- */
+  --color-alerta: #e5705f; /* 6.4:1 sobre obsidiana — legible sin alarmismo */
+
+  /* --- Tipografía --- */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+}
+
+/* ------------------------------------------------------------
+   Contrastes verificados sobre Negro Obsidiana (#0C0812):
+     marfil          17.0:1  ✓ AAA   texto largo
+     oro             12.0:1  ✓ AAA   resultado del Índice
+     dorado           8.9:1  ✓ AAA   títulos y CTAs
+     alerta           6.4:1  ✓ AA    mensajes de error
+     grafito-texto    4.9:1  ✓ AA    metadata y fechas
+     grafito          4.1:1  ✗       NO para texto — solo bordes/decoración
+     azul             3.1:1  ✗       NO para texto — solo como fondo o borde
+
+   Sobre Azul Plano (#1E3A8A) — superficie del blueprint:
+     marfil           9.2:1  ✓ AAA   líneas del dibujo técnico
+     oro              6.3:1  ✓ AA    cotas y énfasis sobre el pliego
+     dorado           4.7:1  ✓ AA    contorno de blindaje
+
+   Combinaciones sobre fondo de color:
+     obsidiana sobre dorado   8.9:1  ✓ AAA   botón dorado (CTA primario)
+     marfil    sobre azul     5.8:1  ✓ AA    botón/badge del Consultor
+     obsidiana sobre alerta   6.4:1  ✓ AA    badge de error
+   ------------------------------------------------------------ */
+
+/* ============================================================
+   PUENTE: tokens semánticos de shadcn → paleta de marca.
+   Todo componente de shadcn o 21st.dev que se pegue al proyecto
+   entra ya pintado con la identidad de Luifer, sin editarlo.
+   Nunca poner un hex acá: siempre referenciar la paleta de arriba.
+   ============================================================ */
+
+@theme inline {
+  --font-heading: var(--font-display);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* La plataforma es oscura siempre — no hay modo claro.
+   `.dark` repite los valores para los componentes que lo consultan. */
+:root,
+.dark {
+  --background: var(--color-obsidiana);
+  --foreground: var(--color-marfil);
+
+  --card: var(--color-nocturno);
+  --card-foreground: var(--color-marfil);
+  --popover: var(--color-nocturno);
+  --popover-foreground: var(--color-marfil);
+
+  /* Primario = dorado. Es el CTA, el momento de valor real. */
+  --primary: var(--color-dorado);
+  --primary-foreground: var(--color-obsidiana);
+
+  --secondary: var(--color-nocturno);
+  --secondary-foreground: var(--color-marfil);
+
+  --muted: var(--color-nocturno);
+  --muted-foreground: var(--color-grafito-texto);
+
+  /* Acento = azul, reservado al módulo Consultor Luifer. */
+  --accent: var(--color-azul);
+  --accent-foreground: var(--color-marfil);
+
+  --destructive: var(--color-alerta);
+
+  --border: rgb(116 112 120 / 30%);
+  --input: rgb(116 112 120 / 45%);
+  --ring: var(--color-dorado);
+
+  /* Gráficas derivadas de la marca — provisional hasta definir el Índice. */
+  --chart-1: var(--color-dorado);
+  --chart-2: var(--color-azul);
+  --chart-3: var(--color-oro);
+  --chart-4: var(--color-grafito-texto);
+  --chart-5: var(--color-marfil);
+
+  --sidebar: var(--color-nocturno);
+  --sidebar-foreground: var(--color-marfil);
+  --sidebar-primary: var(--color-dorado);
+  --sidebar-primary-foreground: var(--color-obsidiana);
+  --sidebar-accent: var(--color-azul);
+  --sidebar-accent-foreground: var(--color-marfil);
+  --sidebar-border: rgb(116 112 120 / 30%);
+  --sidebar-ring: var(--color-dorado);
+
+  --radius: 0.625rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* Selección de texto en dorado, coherente con la identidad */
+::selection {
+  background-color: var(--color-dorado);
+  color: var(--color-obsidiana);
+}
+
+/* ============================================================
+   Secuencia de Apertura — cold open "El Contador"
+   Deliberadamente sobria: ni scanlines, ni glitch, ni estrobo.
+   El nervio lo pone el contraste de cifras, no el efecto.
+   Todo referencia la paleta de arriba — cero hex sueltos.
+   ============================================================ */
+
+/* Escudo antiparpadeo: lo pinta el script inline de layout.tsx en el primer
+   frame, antes de que React monte la secuencia. */
+html[data-intro="pending"] body {
+  overflow: hidden;
+}
+html[data-intro="pending"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background-color: var(--color-obsidiana);
+}
+
+.intro-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 42%,
+    rgb(0 0 0 / 55%) 100%
+  );
+}
+
+/* ---- Compuerta: respiración lenta, no latido ansioso ---- */
+.intro-breathe {
+  animation: intro-breathe 4s ease-in-out infinite;
+}
+@keyframes intro-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+/* ---- Máquina de escribir ---- */
+.intro-caret {
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-left: 0.12em;
+  vertical-align: -0.12em;
+  background-color: var(--color-dorado);
+  animation: intro-caret 1.05s steps(1) infinite;
+}
+@keyframes intro-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---- Entrada de cada línea ---- */
+.intro-rise {
+  animation: intro-rise 700ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@keyframes intro-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- El quiebre: la mesada se parte en dos y cae ----
+   Reemplaza al glitch de la referencia. No hay hue-rotate ni sacudida:
+   la cifra simplemente deja de sostenerse y se apaga a grafito. */
+.intro-figure {
+  position: relative;
+  display: inline-block;
+}
+.intro-figure-bottom {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  clip-path: inset(52% 0 0 0);
+}
+.intro-figure[data-broken="true"] .intro-figure-top {
+  display: inline-block;
+  clip-path: inset(0 0 48% 0);
+  animation: intro-fracture-top 1.1s cubic-bezier(0.3, 0.7, 0.3, 1) forwards;
+}
+.intro-figure[data-broken="true"] .intro-figure-bottom {
+  opacity: 1;
+  animation: intro-fracture-bottom 1.1s cubic-bezier(0.3, 0.7, 0.3, 1) forwards;
+}
+@keyframes intro-fracture-top {
+  0% {
+    transform: none;
+    color: var(--color-marfil);
+  }
+  18% {
+    transform: translate(-3px, -2px);
+  }
+  100% {
+    transform: translate(-10px, -14px) rotate(-1.2deg);
+    color: var(--color-grafito);
+    opacity: 0.25;
+  }
+}
+@keyframes intro-fracture-bottom {
+  0% {
+    transform: none;
+    color: var(--color-marfil);
+  }
+  18% {
+    transform: translate(3px, 2px);
+  }
+  100% {
+    transform: translate(10px, 18px) rotate(1.2deg);
+    color: var(--color-grafito);
+    opacity: 0.25;
+  }
+}
+
+/* ---- El pliego de blueprint ---- */
+.bp-sheet {
+  width: min(88vw, 40rem);
+  border-radius: 6px;
+  padding: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 100% at 50% 0%, var(--color-plano) 0%, var(--color-plano-hondo) 100%);
+  box-shadow:
+    0 0 0 1px rgb(244 241 235 / 12%),
+    0 26px 60px -24px rgb(0 0 0 / 70%);
+}
+
+/* La planta encabeza el pliego y luego retrocede a huella bajo la casa:
+   el mismo objeto cambia de papel, no desaparece y aparece otro. */
+.bp-plan {
+  transform-origin: 280px 180px;
+  transform: scale(1.14);
+  opacity: 1;
+  transition:
+    transform 1100ms cubic-bezier(0.3, 0.7, 0.3, 1),
+    opacity 1100ms ease-out;
+}
+.bp-plan[data-phase="footprint"] {
+  transform: scale(1);
+  opacity: 0.18;
+}
+.bp-plan[data-phase="gone"] {
+  transform: scale(1);
+  opacity: 0;
+}
+
+/* Una pluma avanza a ritmo parejo: linear, no ease-in-out. */
+.bp-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+.bp-draw[data-on="true"] {
+  animation-name: intro-draw;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes intro-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Cada unidad viaja a su celda; los clones además entran desde nada.
+   El trazo no escala con el grupo (non-scaling-stroke): el grosor de línea
+   es constante, como en un plano real. */
+.bp-unit {
+  opacity: 0;
+  transition:
+    transform 1200ms cubic-bezier(0.3, 0.7, 0.3, 1),
+    opacity 700ms ease-out;
+}
+.bp-unit[data-on="true"] {
+  opacity: 1;
+}
+
+/* El trazo del clon ya está hecho: nace completo. */
+.bp-solid {
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+}
+
+.bp-label {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  opacity: 0;
+}
+.bp-label[data-on="true"] {
+  animation: intro-rise 600ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+/* El blindaje cierra alrededor del pliego. Único dorado de la escena. */
+.bp-shield {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+}
+.bp-shield[data-on="true"] {
+  animation: intro-shield 1600ms ease-out forwards;
+}
+@keyframes intro-shield {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---- Reveal de marca: bloom dorado lento, nunca estrobo ---- */
+.intro-bloom {
+  position: relative;
+  animation: intro-bloom 900ms ease-out both;
+}
+.intro-bloom::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgb(215 167 46 / 22%) 0%,
+    transparent 62%
+  );
+  animation: intro-glow 1400ms ease-out both;
+}
+@keyframes intro-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.97);
+    filter: brightness(2.2);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes intro-glow {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- Progreso de la narración ---- */
+.intro-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 0;
+  background-color: var(--color-dorado);
+  opacity: 0.5;
+  animation-name: intro-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes intro-progress {
+  to {
+    width: 100%;
+  }
+}
+
+/* La secuencia ni siquiera se arma con reduced-motion (lo corta el script
+   inline), pero si algo se cuela, acá se queda quieto. */
+@media (prefers-reduced-motion: reduce) {
+  .intro-breathe,
+  .intro-caret,
+  .intro-rise,
+  .bp-draw,
+  .bp-shield,
+  .bp-label,
+  .intro-bloom,
+  .intro-bloom::before,
+  .intro-progress,
+  .intro-figure[data-broken="true"] .intro-figure-top,
+  .intro-figure[data-broken="true"] .intro-figure-bottom {
+    animation: none !important;
+  }
+  .bp-plan,
+  .bp-unit {
+    transition: none !important;
+  }
+  .bp-label[data-on="true"] {
+    opacity: 1 !important;
+  }
+  /* Sin animación, el trazado se queda en su estado final: el pliego
+     completo. De lo contrario quedaría en blanco (dashoffset sin recorrer). */
+  .bp-draw,
+  .bp-shield {
+    stroke-dashoffset: 0 !important;
+  }
+  .bp-shield[data-on="true"] {
+    opacity: 1 !important;
+  }
+}

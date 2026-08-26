@@ -1,0 +1,24 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno — nunca subir secretos
+.env
+.env.local
+.env.*.local
+
+# Builds
+dist/
+build/
+.next/
+out/
+
+# Cobertura y logs
+coverage/
+*.log
+npm-debug.log*
+
+# Sistema y editores
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
