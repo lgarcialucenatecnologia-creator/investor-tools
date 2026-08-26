@@ -207,7 +207,7 @@ export const MOBILE_UNITS = 4;
 export const DESKTOP_UNITS = 8;
 
 /** Versionada: si el guion cambia, la secuencia vuelve a correr una vez. */
-export const SEEN_KEY = "luifer:intro:v14";
+export const SEEN_KEY = "luifer:intro:v15";
 
 export const COPY = {
   gateTitle: "Pulsa para continuar",
@@ -228,16 +228,17 @@ export const COPY = {
 
   other: "Hay otra forma de pensionarse.",
   /**
-   * Las dos líneas del trazado. La primera describe lo que hay en pantalla —
-   * un dibujo y nada más, que es literalmente lo que se compra en lista 0. La
-   * segunda dice dónde está la ganancia: no en vender después, sino en que la
-   * valorización de la obra le pertenece a quien entró primero.
+   * Las dos líneas del trazado. La primera señala lo que hay en pantalla y le
+   * da la vuelta: no es que falte todo por construir, es que ese dibujo ya
+   * vale — y a su precio más bajo. La segunda dice dónde está la ganancia: no
+   * en vender después, sino en que la valorización de la obra le pertenece a
+   * quien entró primero.
    *
    * Ninguna promete una cifra ni un porcentaje: describen a quién le
    * corresponde la valorización, no cuánta va a ser.
    */
   planCaption:
-    "Sobre planos, esto es todo lo que existe. Y ya se puede comprar en lista 0.",
+    "Este dibujo ya tiene precio. Y es el más bajo del proyecto: la lista 0.",
   liftCaption:
     "Se valoriza mientras se levanta. Y esa valorización es de quien compró primero.",
   listed: "precio publicado",
