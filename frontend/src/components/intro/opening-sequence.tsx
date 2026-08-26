@@ -455,7 +455,7 @@ export function OpeningSequence() {
         <div className="intro-bloom flex flex-col items-center gap-6">
           <h2 className="brand-name">{COPY.brand}</h2>
           <p className="intro-meta">{COPY.tagline}</p>
-          <Link href="/indice" onClick={dismiss} className="brand-cta">
+          <Link href="/login" onClick={dismiss} className="brand-cta">
             {COPY.cta}
           </Link>
         </div>
