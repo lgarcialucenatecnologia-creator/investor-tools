@@ -15,10 +15,9 @@ export enum UserStatus {
 }
 
 export enum UserRole {
-  /** Cliente de la plataforma. */
+  /** Quien compró el programa y usa las herramientas. */
   INVESTOR = 'investor',
-  /** Luifer y su equipo. */
-  ADVISOR = 'advisor',
+  /** Luifer y su equipo: además, el panel de administración. */
   ADMIN = 'admin',
 }
 

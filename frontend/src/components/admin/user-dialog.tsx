@@ -13,8 +13,7 @@ import { defaultExpiry, fromDateInput, toDateInput } from '@/lib/validation/date
 import { validateEmail } from '@/lib/validation/auth';
 
 const ROLES: { value: UserRole; label: string }[] = [
-  { value: 'investor', label: 'Cliente' },
-  { value: 'advisor', label: 'Asesor' },
+  { value: 'investor', label: 'Inversionista' },
   { value: 'admin', label: 'Administrador' },
 ];
 

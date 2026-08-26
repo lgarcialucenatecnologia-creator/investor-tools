@@ -13,8 +13,7 @@ const format = (iso: string | null, empty = '—') =>
   iso ? fecha.format(new Date(iso)) : empty;
 
 const ROLE_LABEL: Record<AdminUser['role'], string> = {
-  investor: 'Cliente',
-  advisor: 'Asesor',
+  investor: 'Inversionista',
   admin: 'Administrador',
 };
 

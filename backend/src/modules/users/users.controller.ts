@@ -107,9 +107,7 @@ export class UsersController {
 
     const losesAdmin =
       target.role === UserRole.ADMIN &&
-      (dto.role === UserRole.INVESTOR ||
-        dto.role === UserRole.ADVISOR ||
-        dto.status === UserStatus.SUSPENDED);
+      (dto.role === UserRole.INVESTOR || dto.status === UserStatus.SUSPENDED);
 
     if (losesAdmin) {
       // Quitarse a uno mismo el mando deja fuera al único que podía
