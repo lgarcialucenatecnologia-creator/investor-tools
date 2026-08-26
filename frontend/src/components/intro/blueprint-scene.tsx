@@ -1,26 +1,24 @@
 /**
- * Pliego de blueprint: la planta se traza sobre el papel azul y, cuando la
- * narración lo pide, se estructura en la casa en perspectiva mientras la
- * planta retrocede al fondo — la huella queda debajo de lo construido.
+ * Pliego de blueprint: la planta se traza sobre el papel azul, se levanta en
+ * volumen, recibe las cotas del caso, se materializa y por último se repite en
+ * rejilla. Es el escenario entero de los Actos 3 y 4.
  *
- * La planta es un apartamento real de 10 × 7 m (dos alcobas, baño, cocina y
- * sala-comedor), con la misma huella que la casa para que el paso de una a
- * otra se lea como el mismo edificio. Sus vanos están declarados en
- * coordenadas absolutas y de ahí salen tanto el hueco del muro como la marca
- * de carpintería: un muro dibujado en sentido inverso no puede desalinearlos.
+ * La planta es un apartamento real de 10 x 7 m (dos alcobas, baño, cocina y
+ * sala-comedor). Sus vanos están declarados en coordenadas absolutas y de ahí
+ * salen tanto el hueco del muro como la marca de carpintería: un muro dibujado
+ * en sentido inverso no puede desalinearlos.
  *
- * La geometría de la casa no está dibujada a ojo: son las aristas de un
- * volumen de 10 × 7 × 4 m con cumbrera a 6.6 m, proyectadas en perspectiva de
- * dos puntos (giro 34°, cámara a 2.3 m y 27 m de distancia). Por eso las
- * verticales quedan verticales y las fugas son consistentes.
+ * La casa no está dibujada a ojo: son las aristas de un volumen de 10 x 7 x 4 m
+ * con cumbrera a 6.6 m, proyectadas en perspectiva de dos puntos (giro 34°,
+ * cámara a 2.3 m y 27 m de distancia). Por eso las verticales quedan verticales
+ * y las fugas son consistentes. Las caras del relleno salen de la misma
+ * proyección, así que encajan con el trazo sin ajuste manual.
  *
  * Cada trazo es un polígono cerrado con `pathLength={1}`: el dasharray se
- * normaliza y basta animar dashoffset de 1 a 0. Agrupar los rectángulos en un
- * solo path deja 23 trazos en vez de 61, y cada capa se lee como un gesto
- * único en vez de como veintitantas animaciones sueltas.
+ * normaliza y basta animar dashoffset de 1 a 0.
  */
 
-import { FIGURES } from "./script";
+import { COMPARABLES, COPY, COSTS, FIGURES, type Scene } from "./script";
 
 const PLAN_WALLS = [
   "M70.0 33.0 L112.0 33.0 M179.2 33.0 L347.2 33.0 M439.6 33.0 L490.0 33.0",
@@ -71,12 +69,34 @@ const HOUSE_OPENINGS = [
   "M126.5 126.6 L92.4 132.5 L92.4 85.2 L126.5 75.9 Z",
 ] as const;
 
+const HOUSE_FACES = [
+  { d: "M176.5 321.9 L501.9 299.8 L501.9 152.9 L176.5 136.5 Z", light: 0.2 }, // frente
+  { d: "M176.5 321.9 L55.7 299.1 L55.7 153.4 L176.5 136.5 Z", light: 0.11 }, // costado
+  { d: "M167.7 134.2 L526.0 152.6 L426.4 74.0 L91.7 38.1 Z", light: 0.28 }, // cubierta
+  { d: "M167.7 134.2 L91.7 38.1 L34.0 153.7 Z", light: 0.15 }, // gablete
+] as const;
+
 /** Etapas del pliego, en el orden en que ocurren. */
-export type BlueprintStage = "idle" | "plan" | "build" | "multiply" | "shield";
+export type BlueprintStage =
+  | "idle"
+  | "plan"
+  | "lift"
+  | "figures"
+  | "material"
+  | "grid";
+
+/** Traduce la escena del guion a la etapa del pliego. */
+export function stageFor(scene: Scene, reached: (s: Scene) => boolean): BlueprintStage {
+  if (!reached("plan")) return "idle";
+  if (reached("repeat")) return "grid";
+  if (reached("material")) return "material";
+  if (reached("listed")) return "figures";
+  if (reached("lift")) return "lift";
+  return "plan";
+}
 
 type Layer = {
   paths: readonly string[];
-  /** Retraso de la capa completa, ya dentro de su etapa. */
   offset: number;
   step: number;
   duration: number;
@@ -91,28 +111,23 @@ const PLAN_LAYERS: readonly Layer[] = [
 ];
 
 const HOUSE_LAYERS: readonly Layer[] = [
-  { paths: HOUSE_STRUCTURE, offset: 800, step: 110, duration: 720, width: 2.2 },
-  { paths: HOUSE_ROOF, offset: 1800, step: 110, duration: 680, width: 2.2 },
-  { paths: HOUSE_OPENINGS, offset: 2500, step: 90, duration: 560, width: 1.3, opacity: 0.85 },
+  { paths: HOUSE_STRUCTURE, offset: 200, step: 90, duration: 560, width: 2.2 },
+  { paths: HOUSE_ROOF, offset: 900, step: 90, duration: 520, width: 2.2 },
+  { paths: HOUSE_OPENINGS, offset: 1400, step: 70, duration: 440, width: 1.3, opacity: 0.85 },
 ];
 
 /**
- * Rejilla 2×2 sobre el pliego. Las celdas están calculadas contra la mancha
- * real del dibujo (492 × 284 en unidades del viewBox): a escala 0.40 cada
- * unidad ocupa 197 × 114, lo que deja 68 px de aire entre columnas y 40 entre
- * filas, y sitio para la etiqueta debajo sin pisar la fila siguiente.
+ * Rejillas de la repetición. Las celdas están calculadas contra la mancha real
+ * del dibujo (492 x 284 en unidades del viewBox), dejando aire entre columnas
+ * y sitio para la etiqueta encima de cada unidad.
  */
-const CELL_SCALE = 0.4;
-const CELLS = [
-  { x: 148, y: 96 },
-  { x: 412, y: 96 },
-  { x: 148, y: 250 },
-  { x: 412, y: 250 },
-] as const;
+const GRIDS = {
+  4: { scale: 0.4, xs: [148, 412], ys: [96, 250] },
+  8: { scale: 0.235, xs: [78, 226, 374, 522], ys: [112, 252] },
+} as const;
 
-// Se compone a mano en vez de usar `style: "currency"`: el formato es-CO
-// intercala un espacio ("$ 1.200.000") que aquí estorba junto al signo +.
 const amount = new Intl.NumberFormat("es-CO");
+const price = (v: number) => `$${amount.format(v)}`;
 
 function Strokes({
   layers,
@@ -156,14 +171,28 @@ function Strokes({
   );
 }
 
-export function BlueprintScene({ stage }: { stage: BlueprintStage }) {
-  const building = stage === "build" || stage === "multiply" || stage === "shield";
-  const multiplying = stage === "multiply" || stage === "shield";
+type BlueprintSceneProps = {
+  stage: BlueprintStage;
+  /** Paso de las cotas: 0 publicado · 1 comparables · 2 ajustado · 3 costos · 4 máximo. */
+  figureStep: number;
+  units: 4 | 8;
+  comparables: number;
+};
+
+export function BlueprintScene({
+  stage,
+  figureStep,
+  units,
+  comparables,
+}: BlueprintSceneProps) {
+  const built = stage !== "idle" && stage !== "plan";
+  const asideways = stage === "figures";
+  const grid = GRIDS[units];
+  const cells = grid.ys.flatMap((y) => grid.xs.map((x) => ({ x, y })));
 
   return (
     <div className="bp-sheet" aria-hidden="true">
       <svg viewBox="0 0 560 360" className="block h-auto w-full" fill="none">
-        {/* Retícula del pliego: decorativa y quieta, nunca animada. */}
         <defs>
           <pattern id="bp-grid" width="20" height="20" patternUnits="userSpaceOnUse">
             <path
@@ -177,70 +206,113 @@ export function BlueprintScene({ stage }: { stage: BlueprintStage }) {
         </defs>
         <rect width="560" height="360" fill="url(#bp-grid)" />
 
-        {/* La planta: protagonista mientras se traza, huella cuando se
-            construye, y fuera cuando la unidad ya se repitió. */}
+        {/* La planta: protagonista mientras se traza, huella cuando se levanta,
+            y fuera cuando la unidad ya se repitió. */}
         <g
           className="bp-plan"
-          data-phase={multiplying ? "gone" : building ? "footprint" : "hero"}
+          data-phase={stage === "grid" ? "gone" : built ? "footprint" : "hero"}
         >
           <Strokes layers={PLAN_LAYERS} on={stage !== "idle"} nonScaling={false} />
         </g>
 
-        {/* La unidad. La primera se traza capa por capa; las demás son clones
-            que entran ya dibujados cuando la rejilla se puebla. */}
-        {CELLS.map((cell, i) => (
-          <g
-            key={`${cell.x}-${cell.y}`}
-            className="bp-unit"
-            data-on={(i === 0 ? building : multiplying) ? "true" : "false"}
-            style={{
-              transform: multiplying
-                ? `translate(${cell.x}px, ${cell.y}px) scale(${CELL_SCALE}) translate(-280px, -180px)`
-                : "none",
-              // La casa ya trazada se sostiene medio segundo en el centro
-              // antes de viajar: sin esa pausa nunca se la ve entera y sola.
-              transitionDelay: multiplying
-                ? `${i === 0 ? 500 : 1500 + (i - 1) * 380}ms`
-                : "0ms",
-            }}
-          >
-            <Strokes layers={HOUSE_LAYERS} on={i === 0 ? building : multiplying} solid={i > 0} />
-          </g>
-        ))}
+        {/* El volumen se corre a la izquierda cuando entran las cotas, para
+            dejarles la mitad derecha del pliego. */}
+        <g className="bp-body" data-aside={asideways ? "true" : "false"}>
+          {stage !== "grid" && (
+            <>
+              <g className="bp-faces" data-on={stage === "material" ? "true" : "false"}>
+                {HOUSE_FACES.map((face) => (
+                  <path
+                    key={face.d}
+                    d={face.d}
+                    fill="var(--color-marfil)"
+                    opacity={face.light}
+                  />
+                ))}
+              </g>
+              <Strokes layers={HOUSE_LAYERS} on={built} />
+            </>
+          )}
+        </g>
 
-        {/* Renta por unidad. En marfil, no en oro: el oro está reservado al
-            resultado del Índice y el dorado al blindaje. */}
-        {CELLS.map((cell, i) => (
-          <text
-            key={`t-${cell.x}-${cell.y}`}
-            x={cell.x}
-            y={cell.y + 72}
-            textAnchor="middle"
-            className="bp-label"
-            data-on={multiplying ? "true" : "false"}
-            style={{ animationDelay: `${1900 + i * 380}ms` }}
-            fill="var(--color-marfil)"
-            fontSize="15"
-          >
-            +${amount.format(FIGURES.monthlyIncomes[i])}/mes
-          </text>
-        ))}
+        {/* La repetición: la primera unidad viaja a su celda, las demás entran
+            ya dibujadas. Cada una suelta un +$ hacia arriba. */}
+        {stage === "grid" &&
+          cells.map((cell, i) => (
+            <g
+              key={`${cell.x}-${cell.y}`}
+              className="bp-unit"
+              data-on="true"
+              style={{
+                transform: `translate(${cell.x}px, ${cell.y}px) scale(${grid.scale}) translate(-280px, -180px)`,
+                transitionDelay: `${i === 0 ? 400 : 900 + (i - 1) * 190}ms`,
+              }}
+            >
+              <g className="bp-faces" data-on="true">
+                {HOUSE_FACES.map((face) => (
+                  <path key={face.d} d={face.d} fill="var(--color-marfil)" opacity={face.light} />
+                ))}
+              </g>
+              <Strokes layers={HOUSE_LAYERS} on solid />
+            </g>
+          ))}
 
-        {/* El blindaje: el único dorado del pliego, y llega al final. */}
-        <rect
-          x="5"
-          y="5"
-          width="550"
-          height="350"
-          rx="4"
-          pathLength={1}
-          className="bp-shield"
-          data-on={stage === "shield" ? "true" : "false"}
-          stroke="var(--color-dorado)"
-          strokeWidth={2.5}
-          vectorEffect="non-scaling-stroke"
-        />
+        {stage === "grid" &&
+          cells.map((cell, i) => (
+            <text
+              key={`p-${cell.x}-${cell.y}`}
+              x={cell.x}
+              y={cell.y - (units === 8 ? 44 : 74)}
+              textAnchor="middle"
+              className="bp-plus"
+              style={{ animationDelay: `${1200 + i * 190}ms` }}
+              fill="var(--color-dorado)"
+              fontSize={units === 8 ? 17 : 22}
+            >
+              +$
+            </text>
+          ))}
       </svg>
+
+      {/* Las cotas del caso, colgadas a la derecha con su línea guía. */}
+      <div className="cotas" data-on={asideways ? "true" : "false"}>
+        <span className="cota-guide" />
+
+        <p className="cota" data-on={figureStep >= 0 ? "true" : "false"}>
+          <span className="cota-fig" data-struck={figureStep >= 2 ? "true" : "false"}>
+            {price(FIGURES.listedPrice)}
+          </span>
+          <span className="cota-tag">{COPY.listed}</span>
+        </p>
+
+        <ul className="cota-list" data-on={figureStep >= 1 ? "true" : "false"}>
+          <li className="cota-tag">{COPY.compsLead}</li>
+          {COMPARABLES.slice(0, comparables).map((c, i) => (
+            <li key={c.label} style={{ animationDelay: `${i * 180}ms` }}>
+              <span>{c.label}</span>
+              <span className="tabular-nums">{price(c.perM2)}/m²</span>
+            </li>
+          ))}
+        </ul>
+
+        <p className="cota" data-on={figureStep >= 2 ? "true" : "false"}>
+          <span className="cota-fig">{price(FIGURES.adjustedPrice)}</span>
+          <span className="cota-tag">{COPY.adjusted}</span>
+        </p>
+
+        <ul className="cota-costs" data-on={figureStep >= 3 ? "true" : "false"}>
+          {COSTS.map((c, i) => (
+            <li key={c} style={{ animationDelay: `${i * 160}ms` }}>
+              {c}
+            </li>
+          ))}
+        </ul>
+
+        <p className="cota-max" data-on={figureStep >= 4 ? "true" : "false"}>
+          <span className="cota-fig">{price(FIGURES.maxPrice)}</span>
+          <span className="cota-tag">{COPY.maxPrice}</span>
+        </p>
+      </div>
     </div>
   );
 }

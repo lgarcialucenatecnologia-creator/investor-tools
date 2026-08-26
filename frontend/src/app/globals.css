@@ -22,6 +22,11 @@
   /* --- Texto (20%) --- */
   --color-marfil: #f4f1eb; /* Blanco Marfil — copy largo. NUNCA blanco puro */
 
+  /* --- Paleta fría: Actos 1 y 2. Oficina, no marca. --- */
+  --color-frio: #14161a; /* fondo gris frío, desaturado */
+  --color-frio-texto: #e8eaed; /* blanco frío — NUNCA marfil, que es cálido */
+  --color-frio-tenue: #868b95; /* metadata en los actos fríos */
+
   /* --- Superficie técnica: el plano arquitectónico --- */
   --color-plano: #1e3a8a; /* Azul Plano — superficie de blueprint */
   --color-plano-hondo: #16306f; /* Profundidad del pliego, viñeta y retícula */
@@ -48,6 +53,11 @@
      grafito-texto    4.9:1  ✓ AA    metadata y fechas
      grafito          4.1:1  ✗       NO para texto — solo bordes/decoración
      azul             3.1:1  ✗       NO para texto — solo como fondo o borde
+
+   Sobre Gris Frío (#14161A) — Actos 1 y 2:
+     frio-texto      15.0:1  ✓ AAA   copy y el signo $
+     frio-tenue       5.3:1  ✓ AA    metadata y gastos
+     dorado           8.2:1  ✓ AAA   (no se usa: el cálido es de los Actos 3-4)
 
    Sobre Azul Plano (#1E3A8A) — superficie del blueprint:
      marfil           9.2:1  ✓ AAA   líneas del dibujo técnico
@@ -178,9 +188,13 @@
 }
 
 /* ============================================================
-   Secuencia de Apertura — cold open "El Contador"
-   Deliberadamente sobria: ni scanlines, ni glitch, ni estrobo.
-   El nervio lo pone el contraste de cifras, no el efecto.
+   Secuencia de Apertura — cold open en cuatro actos
+
+   Dos paletas y solo dos. Actos 1-2: gris frío desaturado, con grano y
+   viñeta — es una oficina, no la marca. Actos 3-4: obsidiana y azul de
+   arquitectura, con el dorado reservado únicamente a las cifras positivas.
+   El corte de paleta en la ruptura hace la mitad del trabajo narrativo.
+
    Todo referencia la paleta de arriba — cero hex sueltos.
    ============================================================ */
 
@@ -194,7 +208,41 @@ html[data-intro="pending"] body::before {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background-color: var(--color-obsidiana);
+  background-color: var(--color-frio);
+}
+
+.intro-root {
+  --ink: var(--color-frio-texto);
+  --ink-soft: var(--color-frio-tenue);
+  --bg: var(--color-frio);
+  --accent: var(--color-frio-texto);
+
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.75rem;
+  overflow: hidden;
+  padding: 0 1.5rem;
+  text-align: center;
+  color: var(--ink);
+  background-color: var(--bg);
+  /* El corte de paleta: rápido, pero no instantáneo. */
+  transition:
+    background-color 420ms ease,
+    color 420ms ease;
+}
+
+/* Actos 3 y 4: vuelve la identidad de marca y aparece el cálido. */
+.intro-root[data-act="3"],
+.intro-root[data-act="4"] {
+  --ink: var(--color-marfil);
+  --ink-soft: var(--color-grafito-texto);
+  --bg: var(--color-obsidiana);
+  --accent: var(--color-dorado);
 }
 
 .intro-vignette {
@@ -208,124 +256,230 @@ html[data-intro="pending"] body::before {
   );
 }
 
-/* ---- Compuerta: respiración lenta, no latido ansioso ---- */
-.intro-breathe {
-  animation: intro-breathe 4s ease-in-out infinite;
+/* Grano: solo en los actos fríos. Turbulencia SVG embebida — sin archivos. */
+.intro-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.075;
+  transition: opacity 420ms ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-@keyframes intro-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.06);
-    opacity: 1;
-  }
+.intro-root[data-act="3"] .intro-grain,
+.intro-root[data-act="4"] .intro-grain {
+  opacity: 0;
 }
 
-/* ---- Máquina de escribir ---- */
+/* La ruptura: corto y sucio. Una sola sacudida, no un efecto sostenido. */
+.intro-root[data-rupture="true"] {
+  animation: intro-rupture 420ms steps(2) 2;
+}
+@keyframes intro-rupture {
+  0% { transform: none; filter: none; }
+  30% { transform: translate(-5px, 2px); filter: contrast(2.2) saturate(0); }
+  60% { transform: translate(6px, -3px); filter: invert(0.12); }
+  100% { transform: none; filter: none; }
+}
+
+/* ---------- Tipografía de la pieza ---------- */
+.intro-stack {
+  display: flex;
+  max-width: 46rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+.intro-line {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3.4vw, 2.5rem);
+  line-height: 1.3;
+}
+.intro-meta {
+  font-size: clamp(0.85rem, 1.6vw, 1rem);
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+.intro-accent {
+  color: var(--accent);
+}
+.intro-hud {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+.intro-hud-on {
+  color: var(--ink);
+}
+
 .intro-caret {
   display: inline-block;
   width: 0.5em;
   height: 1em;
   margin-left: 0.12em;
   vertical-align: -0.12em;
-  background-color: var(--color-dorado);
+  background-color: var(--accent);
   animation: intro-caret 1.05s steps(1) infinite;
 }
 @keyframes intro-caret {
-  0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
-  100% {
-    opacity: 0;
-  }
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
 }
 
-/* ---- Entrada de cada línea ---- */
 .intro-rise {
   animation: intro-rise 700ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
 @keyframes intro-rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
 }
 
-/* ---- El quiebre: la mesada se parte en dos y cae ----
-   Reemplaza al glitch de la referencia. No hay hue-rotate ni sacudida:
-   la cifra simplemente deja de sostenerse y se apaga a grafito. */
-.intro-figure {
+/* ---------- El Día 30: el $ y su desfile de gastos ---------- */
+.payday {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.payday-label {
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+  letter-spacing: 0.02em;
+}
+
+.glyph {
   position: relative;
   display: inline-block;
+  font-family: var(--font-display);
+  font-size: clamp(7rem, 22vw, 15rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
 }
-.intro-figure-bottom {
+/* Establece la caja sin pintar nada: las franjas van encima, en absoluto. */
+.glyph::before {
+  content: "$";
+  visibility: hidden;
+}
+.glyph-slab {
   position: absolute;
   inset: 0;
+  transition:
+    transform 900ms cubic-bezier(0.4, 0.05, 0.4, 1),
+    opacity 900ms ease-in;
+}
+.glyph-slab[data-gone="true"] {
   opacity: 0;
-  clip-path: inset(52% 0 0 0);
 }
-.intro-figure[data-broken="true"] .intro-figure-top {
-  display: inline-block;
-  clip-path: inset(0 0 48% 0);
-  animation: intro-fracture-top 1.1s cubic-bezier(0.3, 0.7, 0.3, 1) forwards;
+/* Acto 4: los gastos llegan igual, pero no se llevan nada. El $ ni se mueve. */
+.glyph[data-holding="true"] .glyph-slab {
+  opacity: 1 !important;
+  transform: none !important;
 }
-.intro-figure[data-broken="true"] .intro-figure-bottom {
-  opacity: 1;
-  animation: intro-fracture-bottom 1.1s cubic-bezier(0.3, 0.7, 0.3, 1) forwards;
-}
-@keyframes intro-fracture-top {
-  0% {
-    transform: none;
-    color: var(--color-marfil);
-  }
-  18% {
-    transform: translate(-3px, -2px);
-  }
-  100% {
-    transform: translate(-10px, -14px) rotate(-1.2deg);
-    color: var(--color-grafito);
-    opacity: 0.25;
-  }
-}
-@keyframes intro-fracture-bottom {
-  0% {
-    transform: none;
-    color: var(--color-marfil);
-  }
-  18% {
-    transform: translate(3px, 2px);
-  }
-  100% {
-    transform: translate(10px, 18px) rotate(1.2deg);
-    color: var(--color-grafito);
-    opacity: 0.25;
-  }
+.glyph-zero {
+  font-size: clamp(7rem, 22vw, 15rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink-soft);
+  animation: intro-rise 500ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
 
-/* ---- El pliego de blueprint ---- */
-.bp-sheet {
-  width: min(88vw, 40rem);
-  border-radius: 6px;
-  padding: 0;
+.expenses {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  text-align: right;
+  transform: translateY(-50%);
+}
+.expenses li {
+  font-size: clamp(0.8rem, 1.6vw, 1rem);
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  opacity: 0;
+  transform: translateX(-28px);
+  transition:
+    opacity 220ms ease-out,
+    transform 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.expenses li[data-on="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Acto 4: lo que sueltan las unidades, apilándose sobre el $ */
+.gains {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 18rem;
+  justify-content: center;
+  gap: 0.4rem 0.75rem;
+}
+.gains li {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.2vw, 1.5rem);
+  color: var(--color-dorado);
+  opacity: 0;
+  animation: intro-rise 500ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+/* ---------- Acto 2: la barra de cotización ---------- */
+.gauge {
+  display: block;
+  width: min(78vw, 30rem);
+  height: 4px;
   overflow: hidden;
-  background:
-    radial-gradient(120% 100% at 50% 0%, var(--color-plano) 0%, var(--color-plano-hondo) 100%);
+  background-color: rgb(134 139 149 / 28%);
+}
+.gauge i {
+  display: block;
+  height: 100%;
+  width: 31.7%; /* 412 de 1.300 */
+  background-color: var(--ink);
+  transition: width 700ms cubic-bezier(0.3, 0.9, 0.3, 1);
+}
+.gauge i[data-full="true"] {
+  width: 100%;
+}
+
+.pension-word {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 8vw, 5rem);
+  letter-spacing: 0.18em;
+  color: var(--ink);
+  animation: intro-rise 600ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+/* ---------- Actos 3 y 4: el pliego ---------- */
+.sheet-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.bp-sheet {
+  position: relative;
+  width: min(88vw, 42rem);
+  overflow: hidden;
+  border-radius: 6px;
+  background: radial-gradient(
+    120% 100% at 50% 0%,
+    var(--color-plano) 0%,
+    var(--color-plano-hondo) 100%
+  );
   box-shadow:
     0 0 0 1px rgb(244 241 235 / 12%),
     0 26px 60px -24px rgb(0 0 0 / 70%);
 }
 
-/* La planta encabeza el pliego y luego retrocede a huella bajo la casa:
-   el mismo objeto cambia de papel, no desaparece y aparece otro. */
 .bp-plan {
   transform-origin: 280px 180px;
   transform: scale(1.14);
@@ -334,13 +488,16 @@ html[data-intro="pending"] body::before {
     transform 1100ms cubic-bezier(0.3, 0.7, 0.3, 1),
     opacity 1100ms ease-out;
 }
-.bp-plan[data-phase="footprint"] {
-  transform: scale(1);
-  opacity: 0.18;
+.bp-plan[data-phase="footprint"] { transform: scale(1); opacity: 0.18; }
+.bp-plan[data-phase="gone"] { transform: scale(1); opacity: 0; }
+
+/* El volumen se corre a la izquierda para dejarle sitio a las cotas. */
+.bp-body {
+  transform-origin: 280px 180px;
+  transition: transform 900ms cubic-bezier(0.3, 0.7, 0.3, 1);
 }
-.bp-plan[data-phase="gone"] {
-  transform: scale(1);
-  opacity: 0;
+.bp-body[data-aside="true"] {
+  transform: translateX(-118px) scale(0.62);
 }
 
 /* Una pluma avanza a ritmo parejo: linear, no ease-in-out. */
@@ -351,69 +508,225 @@ html[data-intro="pending"] body::before {
   stroke-linejoin: miter;
 }
 .bp-draw[data-on="true"] {
-  animation-name: intro-draw;
+  animation-name: bp-draw;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
-@keyframes intro-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
+@keyframes bp-draw {
+  to { stroke-dashoffset: 0; }
 }
-
-/* Cada unidad viaja a su celda; los clones además entran desde nada.
-   El trazo no escala con el grupo (non-scaling-stroke): el grosor de línea
-   es constante, como en un plano real. */
-.bp-unit {
-  opacity: 0;
-  transition:
-    transform 1200ms cubic-bezier(0.3, 0.7, 0.3, 1),
-    opacity 700ms ease-out;
-}
-.bp-unit[data-on="true"] {
-  opacity: 1;
-}
-
-/* El trazo del clon ya está hecho: nace completo. */
 .bp-solid {
   stroke-dasharray: none;
   stroke-dashoffset: 0;
 }
 
-.bp-label {
-  font-family: var(--font-sans);
+/* La materialización: las caras se llenan y el wireframe toma volumen. */
+.bp-faces {
+  opacity: 0;
+  transition: opacity 1200ms ease-out;
+}
+.bp-faces[data-on="true"] {
+  opacity: 1;
+}
+
+.bp-unit {
+  opacity: 0;
+  transition:
+    transform 1100ms cubic-bezier(0.3, 0.7, 0.3, 1),
+    opacity 600ms ease-out;
+}
+.bp-unit[data-on="true"] { opacity: 1; }
+
+.bp-plus {
+  font-family: var(--font-display);
+  opacity: 0;
+  animation: bp-plus 700ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+@keyframes bp-plus {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Las cotas del caso ---------- */
+.cotas {
+  position: absolute;
+  top: 50%;
+  right: 4%;
+  width: 42%;
+  text-align: left;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 500ms ease-out;
+}
+.cotas[data-on="true"] { opacity: 1; }
+
+.cota-guide {
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 1.5rem;
+  border-top: 1px dashed rgb(244 241 235 / 45%);
+}
+
+.cota,
+.cota-max {
+  margin-bottom: 0.55rem;
+  opacity: 0;
+  transition: opacity 400ms ease-out;
+}
+.cota[data-on="true"],
+.cota-max[data-on="true"] { opacity: 1; }
+
+.cota-fig {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(0.95rem, 2.4vw, 1.4rem);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  opacity: 0;
+  color: var(--color-marfil);
 }
-.bp-label[data-on="true"] {
-  animation: intro-rise 600ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+.cota-fig[data-struck="true"] {
+  color: rgb(244 241 235 / 45%);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
 }
-
-/* El blindaje cierra alrededor del pliego. Único dorado de la escena. */
-.bp-shield {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  opacity: 0;
-}
-.bp-shield[data-on="true"] {
-  animation: intro-shield 1600ms ease-out forwards;
-}
-@keyframes intro-shield {
-  0% {
-    opacity: 0;
-    stroke-dashoffset: 1;
-  }
-  12% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 1;
-    stroke-dashoffset: 0;
-  }
+.cota-tag {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: rgb(244 241 235 / 62%);
 }
 
-/* ---- Reveal de marca: bloom dorado lento, nunca estrobo ---- */
+.cota-list,
+.cota-costs {
+  margin-bottom: 0.55rem;
+  opacity: 0;
+  transition: opacity 400ms ease-out;
+}
+.cota-list[data-on="true"],
+.cota-costs[data-on="true"] { opacity: 1; }
+
+.cota-list li:not(.cota-tag) {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.72rem;
+  color: rgb(244 241 235 / 78%);
+  animation: intro-rise 420ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+.cota-costs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.cota-costs li {
+  padding: 0.15rem 0.45rem;
+  border: 1px solid rgb(244 241 235 / 30%);
+  border-radius: 3px;
+  font-size: 0.66rem;
+  color: rgb(244 241 235 / 78%);
+  animation: intro-rise 420ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.cota-max {
+  padding: 0.4rem 0.6rem;
+  border: 1.5px solid var(--color-dorado);
+  border-radius: 4px;
+}
+.cota-max .cota-fig { color: var(--color-dorado); }
+
+/* ---------- La ganancia y su rótulo obligatorio ---------- */
+.gain-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+.gain-fig {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-dorado);
+}
+.thesis {
+  margin-top: 0.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.2vw, 1.45rem);
+  color: var(--color-marfil);
+}
+/* Obligatorio, no decorativo: blinda ante el rechazo por income claims y
+   convierte la cifra en anzuelo hacia el caso completo del webinar. */
+.disclaimer {
+  margin-top: 0.6rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--color-grafito-texto);
+}
+
+/* ---------- La línea del método ---------- */
+.method-title {
+  font-size: 0.78rem;
+  letter-spacing: 0.24em;
+  color: var(--color-dorado);
+}
+.method {
+  position: relative;
+  display: flex;
+  width: min(88vw, 42rem);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.method-rail {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: rgb(116 112 120 / 45%);
+}
+.method-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+}
+.method[data-on="true"] .method-node {
+  animation: intro-rise 420ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+.method-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid var(--color-grafito);
+  background-color: var(--color-obsidiana);
+}
+.method-node[data-lit="true"] .method-dot {
+  border-color: var(--color-dorado);
+  background-color: var(--color-dorado);
+}
+.method-name {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--color-dorado);
+}
+
+/* ---------- Reveal ---------- */
+.brand-name {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 5vw, 3rem);
+  line-height: 1.15;
+  color: var(--color-oro);
+}
+.brand-cta {
+  padding: 0.9rem 2.5rem;
+  border-radius: 0.375rem;
+  background-color: var(--color-dorado);
+  font-weight: 500;
+  color: var(--color-obsidiana);
+  transition: background-color 200ms ease;
+}
+.brand-cta:hover { background-color: var(--color-oro); }
+
 .intro-bloom {
   position: relative;
   animation: intro-bloom 900ms ease-out both;
@@ -424,88 +737,140 @@ html[data-intro="pending"] body::before {
   inset: -40%;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(
-    circle,
-    rgb(215 167 46 / 22%) 0%,
-    transparent 62%
-  );
+  background: radial-gradient(circle, rgb(215 167 46 / 22%) 0%, transparent 62%);
   animation: intro-glow 1400ms ease-out both;
 }
 @keyframes intro-bloom {
-  0% {
-    opacity: 0;
-    transform: scale(0.97);
-    filter: brightness(2.2);
-  }
-  40% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 1;
-    transform: none;
-    filter: none;
-  }
+  0% { opacity: 0; transform: scale(0.97); filter: brightness(2.2); }
+  40% { opacity: 1; }
+  100% { opacity: 1; transform: none; filter: none; }
 }
 @keyframes intro-glow {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
 }
 
-/* ---- Progreso de la narración ---- */
+/* ---------- Compuerta y controles ---------- */
+.gate {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  background-color: var(--bg);
+  color: var(--ink);
+}
+.gate-ring {
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  border: 1px solid var(--ink-soft);
+  border-radius: 50%;
+  animation: gate-breathe 4s ease-in-out infinite;
+}
+@keyframes gate-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+.gate-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.gate-hint {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+.intro-sound {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--ink-soft);
+  border-radius: 0.375rem;
+  color: var(--ink-soft);
+  transition: color 200ms ease, border-color 200ms ease;
+}
+.intro-skip {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 20;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--ink-soft);
+  border-radius: 0.375rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  transition: color 200ms ease, border-color 200ms ease;
+}
+.intro-sound:hover,
+.intro-skip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .intro-progress {
   position: absolute;
   bottom: 0;
   left: 0;
   height: 2px;
   width: 0;
-  background-color: var(--color-dorado);
+  background-color: var(--accent);
   opacity: 0.5;
   animation-name: intro-progress;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
 @keyframes intro-progress {
-  to {
-    width: 100%;
-  }
+  to { width: 100%; }
 }
 
 /* La secuencia ni siquiera se arma con reduced-motion (lo corta el script
-   inline), pero si algo se cuela, acá se queda quieto. */
+   inline), pero si algo se cuela, acá se queda quieto y en su estado final. */
 @media (prefers-reduced-motion: reduce) {
-  .intro-breathe,
+  .intro-root[data-rupture="true"],
   .intro-caret,
   .intro-rise,
   .bp-draw,
-  .bp-shield,
-  .bp-label,
+  .bp-plus,
+  .gains li,
+  .cota-list li,
+  .cota-costs li,
+  .method[data-on="true"] .method-node,
   .intro-bloom,
   .intro-bloom::before,
   .intro-progress,
-  .intro-figure[data-broken="true"] .intro-figure-top,
-  .intro-figure[data-broken="true"] .intro-figure-bottom {
+  .gate-ring {
     animation: none !important;
   }
   .bp-plan,
-  .bp-unit {
+  .bp-body,
+  .bp-unit,
+  .bp-faces,
+  .glyph-slab,
+  .gauge i,
+  .expenses li {
     transition: none !important;
   }
-  .bp-label[data-on="true"] {
-    opacity: 1 !important;
-  }
-  /* Sin animación, el trazado se queda en su estado final: el pliego
-     completo. De lo contrario quedaría en blanco (dashoffset sin recorrer). */
-  .bp-draw,
-  .bp-shield {
-    stroke-dashoffset: 0 !important;
-  }
-  .bp-shield[data-on="true"] {
+  .bp-draw { stroke-dashoffset: 0 !important; }
+  .gains li,
+  .cota-list li,
+  .cota-costs li,
+  .method[data-on="true"] .method-node,
+  .bp-plus {
     opacity: 1 !important;
   }
 }
