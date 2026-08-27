@@ -9,7 +9,7 @@ export function MobileBar() {
   const { user, logout } = useSession();
 
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-grafito/20 px-5 py-4 lg:hidden">
+    <div className="flex shrink-0 items-center justify-between gap-4 border-b border-grafito/20 px-5 py-4 lg:hidden">
       <Link href="/dashboard" className="font-display text-marfil">
         Pensionate con Bienes Raíces
       </Link>

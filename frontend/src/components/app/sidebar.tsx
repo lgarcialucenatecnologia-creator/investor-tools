@@ -22,7 +22,7 @@ export function Sidebar() {
   return (
     <nav
       aria-label="Herramientas"
-      className="flex shrink-0 flex-col border-b border-grafito/20 bg-nocturno lg:h-screen lg:w-[17rem] lg:border-b-0 lg:border-r"
+      className="flex shrink-0 flex-col border-b border-grafito/20 bg-nocturno lg:h-full lg:w-[17rem] lg:border-b-0 lg:border-r"
     >
       <Link
         href="/dashboard"
@@ -35,7 +35,7 @@ export function Sidebar() {
 
       {/* En pantalla angosta el menú se vuelve una fila que se desliza: un
           cajón desplegable sería más máquina para el mismo resultado. */}
-      <ul className="flex gap-1 overflow-x-auto px-3 py-3 lg:flex-1 lg:flex-col lg:overflow-visible lg:px-3 lg:py-0">
+      <ul className="flex gap-1 overflow-x-auto px-3 py-3 lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-visible lg:px-3 lg:py-0">
         {items.map((item) => {
           const active =
             item.href === '/dashboard'
@@ -63,7 +63,7 @@ export function Sidebar() {
         })}
       </ul>
 
-      <div className="hidden flex-col gap-1 border-t border-grafito/20 p-3 lg:flex">
+      <div className="hidden shrink-0 flex-col gap-1 border-t border-grafito/20 p-3 lg:flex">
         {user.role === 'admin' && (
           <Link
             href="/admin"

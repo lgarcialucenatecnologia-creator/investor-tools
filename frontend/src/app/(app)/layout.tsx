@@ -17,10 +17,15 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SessionProvider user={user}>
-      <div className="flex min-h-screen flex-col lg:flex-row">
+      {/* `h-dvh` y no `min-h-screen`: con el mínimo, el contenedor crece con
+          el contenido y la página entera se desplaza, llevándose el menú.
+          Fijando la altura a la ventana y ocultando su desbordamiento, lo
+          único que se desplaza es el contenido. `dvh` en vez de `vh` porque
+          en el móvil la barra del navegador aparece y desaparece. */}
+      <div className="flex h-dvh flex-col overflow-hidden lg:flex-row">
         <MobileBar />
         <Sidebar />
-        <main className="min-w-0 flex-1 px-6 py-10 lg:h-screen lg:overflow-y-auto lg:px-12 lg:py-14">
+        <main className="min-w-0 flex-1 overflow-y-auto px-6 py-10 lg:px-12 lg:py-14">
           <div className="mx-auto w-full max-w-4xl">{children}</div>
         </main>
       </div>
