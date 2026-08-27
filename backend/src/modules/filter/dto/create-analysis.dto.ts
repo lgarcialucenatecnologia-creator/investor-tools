@@ -1,9 +1,9 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
-  ArrayMinSize,
   IsArray,
   IsNumber,
+  IsObject,
   IsOptional,
   IsPositive,
   IsString,
@@ -43,32 +43,34 @@ export class CreateAnalysisDto {
   @MaxLength(140)
   location?: string;
 
-  @Type(() => Number)
-  @IsNumber({}, { message: 'El precio publicado debe ser un número.' })
-  @IsPositive({ message: 'El precio publicado tiene que ser mayor que cero.' })
-  listedPrice: number;
-
-  @Type(() => Number)
-  @IsNumber({}, { message: 'El área debe ser un número.' })
-  @IsPositive({ message: 'El área tiene que ser mayor que cero.' })
-  @Max(100_000)
-  areaM2: number;
-
   /**
-   * Al menos dos: con uno solo no hay mediana que valga, es la opinión de un
-   * único vecino. El tope evita cargas absurdas.
+   * Respuesta por criterio. Se valida contra el registro en el servicio, no
+   * aquí: la lista de criterios cambia con el método y este DTO no tendría
+   * por qué enterarse cada vez.
    */
+  @IsObject()
+  answers: Record<string, string>;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @IsPositive()
+  listedPrice?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @IsPositive()
+  @Max(100_000)
+  areaM2?: number;
+
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(2, {
-    message: 'Necesitas al menos dos comparables para tener una referencia.',
-  })
   @ArrayMaxSize(20, { message: 'Máximo 20 comparables.' })
   @ValidateNested({ each: true })
   @Type(() => ComparableDto)
-  comparables: ComparableDto[];
+  comparables?: ComparableDto[];
 
-  // Los porcentajes van entre 0 y 0.5: por encima de la mitad del valor no
-  // es un costo, es un error de dedo al escribir «20» en vez de «0,20».
   @IsOptional()
   @Type(() => Number)
   @IsNumber()

@@ -17,10 +17,10 @@ export const ComparableSchema = SchemaFactory.createForClass(ComparableEntry);
 /**
  * Un proyecto pasado por el filtro.
  *
- * Se guardan las ENTRADAS y el RESULTADO, no solo las entradas. Si mañana
- * Luifer ajusta los porcentajes por defecto, un análisis viejo tiene que
- * seguir mostrando lo que mostró el día que se hizo: es la base sobre la que
- * alguien decidió comprar o no comprar.
+ * Se guardan las RESPUESTAS y el RESULTADO, no solo las respuestas. Si mañana
+ * Luifer ajusta los pesos, una evaluación vieja tiene que seguir mostrando lo
+ * que mostró el día que se hizo: es la base sobre la que alguien decidió
+ * comprar o no comprar.
  */
 @Schema({ timestamps: true, collection: 'property_analyses' })
 export class Analysis {
@@ -33,30 +33,26 @@ export class Analysis {
   @Prop({ trim: true })
   location?: string;
 
-  @Prop({ required: true })
-  listedPrice: number;
+  /** Respuesta elegida para cada criterio. Los ausentes son «no sé». */
+  @Prop({ type: Object, default: {} })
+  answers: Record<string, string>;
 
-  @Prop({ required: true })
-  areaM2: number;
+  // ---- Comparación de precio, de la que sale el criterio derivado ----
+  @Prop({ type: Number, default: null })
+  listedPrice: number | null;
+
+  @Prop({ type: Number, default: null })
+  areaM2: number | null;
 
   @Prop({ type: [ComparableSchema], default: [] })
   comparables: ComparableEntry[];
 
-  @Prop({ required: true })
-  deedCostRate: number;
+  @Prop({ type: Object, default: null })
+  pricing: Record<string, number | boolean> | null;
 
-  @Prop({ required: true })
-  taxRate: number;
-
-  @Prop({ required: true })
-  refurbishCost: number;
-
-  @Prop({ required: true })
-  safetyMarginRate: number;
-
-  /** El resultado tal como se calculó ese día. */
+  /** La evaluación tal como se calculó ese día. */
   @Prop({ type: Object, required: true })
-  result: Record<string, number | boolean>;
+  result: Record<string, unknown>;
 
   @Prop({ trim: true })
   notes?: string;

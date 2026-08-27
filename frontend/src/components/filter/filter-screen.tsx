@@ -1,36 +1,33 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save, SlidersHorizontal } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api } from '@/lib/api/client';
-import type { Analysis, FilterDefaults, FilterResult } from '@/lib/api/types';
-import { money, percent, shortDate } from '@/lib/format';
+import type { Analysis, Assessment, FilterForm } from '@/lib/api/types';
+import { money, shortDate } from '@/lib/format';
 import {
   ComparablesField,
   emptyComparable,
   toComparables,
   type ComparableDraft,
 } from './comparables-field';
+import { CriterionField } from './criterion-field';
 import { MoneyInput } from './money-input';
-import { Verdict } from './verdict';
+import { ResultPanel } from './result-panel';
 
-/**
- * El historial llega ya resuelto desde el servidor, igual que los valores por
- * defecto. Pedirlo desde el navegador al montar cuesta una vuelta y un
- * parpadeo, y no hay razón: la página ya se renderiza en el servidor.
- */
 export function FilterScreen({
-  defaults,
+  form,
   initialHistory,
 }: {
-  defaults: FilterDefaults;
+  form: FilterForm;
   initialHistory: Analysis[];
 }) {
   const [projectName, setProjectName] = useState('');
   const [location, setLocation] = useState('');
+  const [answers, setAnswers] = useState<Record<string, string | undefined>>({});
   const [listedPrice, setListedPrice] = useState<number | null>(null);
   const [areaM2, setAreaM2] = useState('');
   const [drafts, setDrafts] = useState<ComparableDraft[]>([
@@ -38,72 +35,58 @@ export function FilterScreen({
     emptyComparable(),
   ]);
 
-  const [showRates, setShowRates] = useState(false);
-  const [deedCostRate, setDeedCostRate] = useState(defaults.deedCostRate);
-  const [taxRate, setTaxRate] = useState(defaults.taxRate);
-  const [safetyMarginRate, setSafetyMarginRate] = useState(
-    defaults.safetyMarginRate,
-  );
-  const [refurbishCost, setRefurbishCost] = useState<number | null>(null);
-
-  const [result, setResult] = useState<FilterResult | null>(null);
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [history, setHistory] = useState<Analysis[]>(initialHistory);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
 
-  const comparables = useMemo(() => toComparables(drafts), [drafts]);
-  const area = Number(areaM2.replace(/\D/g, ''));
-  const complete =
-    Boolean(listedPrice) && area > 0 && comparables.length >= 2;
-
-  const payload = useMemo(
-    () => ({
-      projectName: projectName.trim() || 'Sin nombre',
-      ...(location.trim() ? { location: location.trim() } : {}),
-      listedPrice: listedPrice ?? 0,
-      areaM2: area,
-      comparables,
-      deedCostRate,
-      taxRate,
-      safetyMarginRate,
-      refurbishCost: refurbishCost ?? 0,
-    }),
-    [
-      projectName,
-      location,
-      listedPrice,
-      area,
-      comparables,
-      deedCostRate,
-      taxRate,
-      safetyMarginRate,
-      refurbishCost,
-    ],
+  const asked = useMemo(
+    () => form.criteria.filter((c) => !c.derived),
+    [form.criteria],
   );
 
-  // El resultado se recalcula mientras se escribe, pero con una espera: sin
-  // ella cada tecla sería una petición al servidor.
+  const payload = useMemo(() => {
+    const clean: Record<string, string> = {};
+    for (const [key, value] of Object.entries(answers)) {
+      if (value !== undefined) clean[key] = value;
+    }
+    const comparables = toComparables(drafts);
+    const area = Number(areaM2.replace(/\D/g, ''));
+    return {
+      projectName: projectName.trim() || 'Sin nombre',
+      ...(location.trim() ? { location: location.trim() } : {}),
+      answers: clean,
+      ...(listedPrice ? { listedPrice } : {}),
+      ...(area > 0 ? { areaM2: area } : {}),
+      ...(comparables.length >= 2 ? { comparables } : {}),
+    };
+  }, [projectName, location, answers, listedPrice, areaM2, drafts]);
+
+  const answeredCount = Object.values(answers).filter(
+    (v) => v !== undefined,
+  ).length;
+
+  // Se reevalúa al responder, con espera: sin ella cada clic sería una
+  // petición, y aquí se responde rápido y seguido.
   useEffect(() => {
-    // Si faltan datos no se borra el resultado anterior desde aquí: se
-    // ignora al pintar. Borrarlo en el efecto provoca un render en cascada.
-    if (!complete) return;
+    if (answeredCount === 0) return;
     const id = window.setTimeout(() => {
-      api<FilterResult>('/filter/preview', {
+      api<Assessment>('/filter/assess', {
         method: 'POST',
         body: JSON.stringify(payload),
       })
-        .then((r) => {
-          setResult(r);
+        .then((result) => {
+          setAssessment(result);
           setError(null);
         })
         .catch((caught: Error) => setError(caught.message));
-    }, 400);
+    }, 350);
     return () => window.clearTimeout(id);
-  }, [complete, payload]);
+  }, [answeredCount, payload]);
 
   async function handleSave() {
-    if (!projectName.trim()) {
+    if (projectName.trim().length < 2) {
       setError('Ponle un nombre al proyecto para poder guardarlo.');
       return;
     }
@@ -133,91 +116,101 @@ export function FilterScreen({
           Filtro de Seguridad
         </h1>
         <p className="mt-4 max-w-2xl leading-relaxed text-marfil/70">
-          Pasa el proyecto por el filtro. Si no cumple, no entra. Así de
-          simple.
+          Pon el proyecto que te ofrecieron y responde lo que sepas. Lo que no
+          sepas también cuenta: te dice qué preguntar antes de firmar.
         </p>
       </header>
 
-      <section className="flex flex-col gap-6 rounded-lg border border-grafito/20 bg-nocturno p-7">
-        <div className="grid gap-5 md:grid-cols-2">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="project">Proyecto</Label>
-            <Input
-              id="project"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              placeholder="Torre Aralia 402"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="location">Dónde queda (opcional)</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Cll 12, Cali"
-            />
-          </div>
-          <MoneyInput
-            label="Precio publicado"
-            value={listedPrice}
-            onChange={setListedPrice}
-            placeholder="420.000.000"
+      <section className="grid gap-5 rounded-lg border border-grafito/20 bg-nocturno p-7 md:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="project">Proyecto</Label>
+          <Input
+            id="project"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            placeholder="Torre Aralia 402"
           />
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="area">Área en m²</Label>
-            <Input
-              id="area"
-              inputMode="numeric"
-              value={areaM2}
-              onChange={(e) => setAreaM2(e.target.value.replace(/\D/g, ''))}
-              placeholder="80"
-              className="tabular-nums"
-            />
-          </div>
         </div>
-
-        <div className="border-t border-grafito/20 pt-6">
-          <ComparablesField drafts={drafts} onChange={setDrafts} />
-        </div>
-
-        <div className="border-t border-grafito/20 pt-6">
-          <button
-            type="button"
-            onClick={() => setShowRates((v) => !v)}
-            aria-expanded={showRates}
-            className="flex items-center gap-2 text-sm text-dorado underline-offset-4 hover:underline"
-          >
-            <SlidersHorizontal size={15} />
-            {showRates ? 'Ocultar' : 'Ajustar'} costos y margen
-          </button>
-
-          {/* Escondidos por defecto: son los valores del método y casi nunca
-              hay que tocarlos. Quien los necesite, los encuentra. */}
-          {showRates && (
-            <div className="mt-5 grid gap-5 md:grid-cols-2">
-              <RateInput
-                label="Escrituración y registro"
-                value={deedCostRate}
-                onChange={setDeedCostRate}
-              />
-              <RateInput label="Impuestos" value={taxRate} onChange={setTaxRate} />
-              <RateInput
-                label="Margen de seguridad"
-                value={safetyMarginRate}
-                onChange={setSafetyMarginRate}
-                hint="Lo que quieres ganar el día que firmas."
-              />
-              <MoneyInput
-                label="Adecuaciones"
-                value={refurbishCost}
-                onChange={setRefurbishCost}
-                hint="Lo que hay que invertir para dejarlo listo."
-              />
-            </div>
-          )}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="location">Dónde queda (opcional)</Label>
+          <Input
+            id="location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Cll 12, Cali"
+          />
         </div>
       </section>
+
+      {form.categories.map((category) => {
+        const items = asked.filter((c) => c.category === category.id);
+        return (
+          <section
+            key={category.id}
+            className="rounded-lg border border-grafito/20 bg-nocturno p-7"
+          >
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <h2 className="font-display text-xl text-marfil">
+                {category.name}
+              </h2>
+              <span className="text-xs uppercase tracking-[0.14em] text-grafito-texto">
+                pesa {category.weight}% del resultado
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-grafito-texto">
+              {category.description}
+            </p>
+
+            <div className="mt-6 flex flex-col gap-5">
+              {items.map((criterion) => (
+                <CriterionField
+                  key={criterion.id}
+                  criterion={criterion}
+                  value={answers[criterion.id]}
+                  onChange={(value) =>
+                    setAnswers((prev) => ({ ...prev, [criterion.id]: value }))
+                  }
+                />
+              ))}
+
+              {/* El precio no se pregunta: sale de los comparables. Va dentro
+                  de su categoría para que se entienda que puntúa igual. */}
+              {category.id === 'financial' && (
+                <div className="border-t border-grafito/15 pt-5">
+                  <p className="text-marfil">Precio contra la zona</p>
+                  <p className="mt-1 text-sm text-grafito-texto">
+                    No se pregunta: se calcula con los comparables.
+                  </p>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <MoneyInput
+                      label="Precio publicado"
+                      value={listedPrice}
+                      onChange={setListedPrice}
+                      placeholder="420.000.000"
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="area">Área en m²</Label>
+                      <Input
+                        id="area"
+                        inputMode="numeric"
+                        value={areaM2}
+                        onChange={(e) =>
+                          setAreaM2(e.target.value.replace(/\D/g, ''))
+                        }
+                        placeholder="80"
+                        className="tabular-nums"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-5">
+                    <ComparablesField drafts={drafts} onChange={setDrafts} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })}
 
       {error && (
         <p
@@ -228,9 +221,9 @@ export function FilterScreen({
         </p>
       )}
 
-      {complete && result ? (
-        <section className="flex flex-col gap-5">
-          <Verdict result={result} listedPrice={listedPrice ?? 0} />
+      {assessment ? (
+        <>
+          <ResultPanel assessment={assessment} criteria={form.criteria} />
           <div className="flex flex-wrap items-center gap-4">
             <Button type="button" onClick={() => void handleSave()} disabled={saving}>
               {saving ? (
@@ -238,21 +231,21 @@ export function FilterScreen({
               ) : (
                 <>
                   <Save size={15} />
-                  Guardar este análisis
+                  Guardar esta evaluación
                 </>
               )}
             </Button>
             {saved && (
               <span role="status" className="text-sm text-dorado">
-                «{saved}» quedó guardado abajo.
+                «{saved}» quedó guardada abajo.
               </span>
             )}
           </div>
-        </section>
+        </>
       ) : (
         <p className="rounded-lg border border-dashed border-grafito/30 px-6 py-10 text-center text-grafito-texto">
-          Completa el precio, el área y al menos dos comparables. El veredicto
-          aparece solo.
+          Responde lo que sepas. El veredicto aparece solo, y se va afinando con
+          cada respuesta.
         </p>
       )}
 
@@ -272,20 +265,27 @@ export function FilterScreen({
                   <p className="text-xs text-grafito-texto">
                     {item.location ? `${item.location} · ` : ''}
                     {shortDate.format(new Date(item.createdAt))}
+                    {item.pricing
+                      ? ` · máx. ${money(item.pricing.maxPrice)}`
+                      : ''}
                   </p>
                 </div>
-                <div className="flex items-center gap-5">
+                <div className="flex items-center gap-4">
                   <span className="text-sm tabular-nums text-marfil/70">
-                    máx. {money(item.result.maxPrice)}
+                    {item.result.score ?? '—'} · {item.result.confidence}%
                   </span>
                   <span
                     className={`whitespace-nowrap rounded border px-2 py-0.5 text-xs ${
-                      item.result.passes
+                      item.result.verdict === 'verde'
                         ? 'border-dorado/40 bg-dorado/10 text-dorado'
-                        : 'border-alerta/40 bg-alerta/10 text-alerta'
+                        : item.result.verdict === 'amarillo'
+                          ? 'border-oro/40 bg-oro/10 text-oro'
+                          : item.result.verdict === 'rojo'
+                            ? 'border-alerta/40 bg-alerta/10 text-alerta'
+                            : 'border-grafito/40 text-grafito-texto'
                     }`}
                   >
-                    {item.result.passes ? 'Pasa' : 'No pasa'}
+                    {item.result.label}
                   </span>
                 </div>
               </li>
@@ -293,43 +293,6 @@ export function FilterScreen({
           </ul>
         </section>
       )}
-    </div>
-  );
-}
-
-function RateInput({
-  label,
-  value,
-  onChange,
-  hint,
-}: {
-  label: string;
-  value: number;
-  onChange: (value: number) => void;
-  hint?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <Label>{label}</Label>
-      <div className="relative">
-        <Input
-          inputMode="decimal"
-          // Se escribe en porcentaje y se guarda en proporción: nadie piensa
-          // «0,02», todo el mundo piensa «2%».
-          value={String(Math.round(value * 1000) / 10).replace('.', ',')}
-          onChange={(e) => {
-            const parsed = Number(e.target.value.replace(',', '.').replace(/[^\d.]/g, ''));
-            if (Number.isFinite(parsed)) onChange(Math.min(50, parsed) / 100);
-          }}
-          className="pr-8 tabular-nums"
-        />
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-grafito-texto">
-          %
-        </span>
-      </div>
-      <p className="text-xs text-grafito-texto">
-        {hint ?? `Sobre el valor de mercado. Ahora: ${percent(value)}`}
-      </p>
     </div>
   );
 }

@@ -42,10 +42,33 @@ export interface Paginated<T> {
 
 /* ---------- Filtro de Seguridad ---------- */
 
-export interface Comparable {
-  reference: string;
-  areaM2: number;
-  price: number;
+export type CategoryId = 'legal' | 'builder' | 'location' | 'financial' | 'fit';
+export type Verdict = 'verde' | 'amarillo' | 'rojo' | 'sin_datos';
+
+export interface Category {
+  id: CategoryId;
+  name: string;
+  description: string;
+  weight: number;
+}
+
+export interface Choice {
+  value: string;
+  label: string;
+  score: number;
+}
+
+export interface Criterion {
+  id: string;
+  category: CategoryId;
+  question: string;
+  help: string;
+  weight: number;
+  knockout?: boolean;
+  choices: Choice[];
+  unknownAction: string;
+  /** Sale de los comparables; no se pregunta. */
+  derived?: boolean;
 }
 
 export interface FilterDefaults {
@@ -55,11 +78,22 @@ export interface FilterDefaults {
   refurbishCost: number;
 }
 
-/** Cada paso del cálculo, para poder explicar el veredicto. */
-export interface FilterResult {
+export interface FilterForm {
+  categories: Category[];
+  criteria: Criterion[];
+  defaults: FilterDefaults;
+}
+
+export interface Comparable {
+  reference: string;
+  areaM2: number;
+  price: number;
+}
+
+/** Cada paso de la comparación de precio, para poder explicarla. */
+export interface Pricing {
   medianPricePerM2: number;
   marketValue: number;
-  /** Negativo = piden más de lo que vale. */
   listedVsMarket: number;
   deedCost: number;
   taxCost: number;
@@ -71,14 +105,48 @@ export interface FilterResult {
   passes: boolean;
 }
 
-export interface Analysis extends FilterDefaults {
+export interface CategoryScore {
+  id: CategoryId;
+  name: string;
+  weight: number;
+  score: number | null;
+  answered: number;
+  total: number;
+}
+
+export interface Alert {
+  criterionId: string;
+  question: string;
+  severity: 'critica' | 'atencion';
+  message: string;
+}
+
+export interface Evaluation {
+  score: number | null;
+  confidence: number;
+  verdict: Verdict;
+  label: string;
+  summary: string;
+  categories: CategoryScore[];
+  alerts: Alert[];
+  nextSteps: { criterionId: string; action: string }[];
+}
+
+export interface Assessment {
+  evaluation: Evaluation;
+  pricing: Pricing | null;
+}
+
+export interface Analysis {
   id: string;
   projectName: string;
   location: string | null;
-  listedPrice: number;
-  areaM2: number;
+  answers: Record<string, string>;
+  listedPrice: number | null;
+  areaM2: number | null;
   comparables: Comparable[];
-  result: FilterResult;
+  pricing: Pricing | null;
+  result: Evaluation;
   notes: string | null;
   createdAt: string;
 }

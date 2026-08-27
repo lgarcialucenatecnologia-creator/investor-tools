@@ -2,9 +2,17 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { CATEGORIES, CRITERIA } from './criteria';
 import { CreateAnalysisDto } from './dto/create-analysis.dto';
-import { runFilter, type FilterInput, type FilterResult } from './filter.math';
+import { runFilter, type FilterResult } from './filter.math';
+import { evaluate, pricingChoice, type Evaluation } from './scoring';
 import { Analysis, AnalysisDocument } from './schemas/analysis.schema';
+
+export interface Assessment {
+  evaluation: Evaluation;
+  /** `null` si no hay comparables suficientes para calcularlo. */
+  pricing: FilterResult | null;
+}
 
 @Injectable()
 export class FilterService {
@@ -14,58 +22,74 @@ export class FilterService {
     private readonly config: ConfigService,
   ) {}
 
-  /** Los que trae puestos el formulario cuando el usuario no los toca. */
-  defaults() {
+  /** Los criterios y los valores por defecto que usa el formulario. */
+  form() {
     return {
-      deedCostRate: this.config.getOrThrow<number>('filter.deedCostRate'),
-      taxRate: this.config.getOrThrow<number>('filter.taxRate'),
-      safetyMarginRate: this.config.getOrThrow<number>(
-        'filter.safetyMarginRate',
-      ),
-      refurbishCost: 0,
+      categories: CATEGORIES,
+      criteria: CRITERIA,
+      defaults: {
+        deedCostRate: this.config.getOrThrow<number>('filter.deedCostRate'),
+        taxRate: this.config.getOrThrow<number>('filter.taxRate'),
+        safetyMarginRate: this.config.getOrThrow<number>(
+          'filter.safetyMarginRate',
+        ),
+        refurbishCost: 0,
+      },
     };
   }
 
   /**
-   * Arma la entrada del cálculo. Se construye campo por campo y no
-   * esparciendo el DTO encima de los valores por defecto: así un cero
-   * enviado a propósito —«no hay adecuaciones»— se respeta, mientras que un
-   * campo ausente toma el valor por defecto. Esparcir no distingue los dos.
+   * Evalúa sin guardar, para que el resultado se actualice al responder.
+   *
+   * El criterio del precio no se pregunta: sale de los comparables. Si no
+   * hay suficientes, queda sin contestar y baja la confianza, igual que
+   * cualquier otro hueco.
    */
-  private toInput(dto: CreateAnalysisDto): FilterInput {
-    const fallback = this.defaults();
-    return {
+  assess(dto: CreateAnalysisDto): Assessment {
+    const pricing = this.price(dto);
+    const answers = { ...dto.answers };
+
+    if (pricing && dto.listedPrice) {
+      answers.precio_m2 = pricingChoice(dto.listedPrice, pricing.marketValue);
+    } else {
+      delete answers.precio_m2;
+    }
+
+    return { evaluation: evaluate(answers), pricing };
+  }
+
+  private price(dto: CreateAnalysisDto): FilterResult | null {
+    const comparables = dto.comparables ?? [];
+    if (!dto.listedPrice || !dto.areaM2 || comparables.length < 2) return null;
+
+    const fallback = this.form().defaults;
+    return runFilter({
       listedPrice: dto.listedPrice,
       areaM2: dto.areaM2,
-      comparables: dto.comparables,
+      comparables,
       deedCostRate: dto.deedCostRate ?? fallback.deedCostRate,
       taxRate: dto.taxRate ?? fallback.taxRate,
       refurbishCost: dto.refurbishCost ?? fallback.refurbishCost,
       safetyMarginRate: dto.safetyMarginRate ?? fallback.safetyMarginRate,
-    };
-  }
-
-  /** Calcula sin guardar: para que el resultado se actualice al escribir. */
-  preview(dto: CreateAnalysisDto): FilterResult {
-    return runFilter(this.toInput(dto));
+    });
   }
 
   async create(userId: string, dto: CreateAnalysisDto) {
-    const input = this.toInput(dto);
-    const result = runFilter(input);
+    const assessment = this.assess(dto);
 
     const saved = await this.model.create({
       userId: new Types.ObjectId(userId),
       projectName: dto.projectName,
       location: dto.location,
-      listedPrice: dto.listedPrice,
-      areaM2: dto.areaM2,
-      comparables: dto.comparables,
-      deedCostRate: input.deedCostRate,
-      taxRate: input.taxRate,
-      refurbishCost: input.refurbishCost,
-      safetyMarginRate: input.safetyMarginRate,
-      result: result as unknown as Record<string, number | boolean>,
+      answers: dto.answers,
+      listedPrice: dto.listedPrice ?? null,
+      areaM2: dto.areaM2 ?? null,
+      comparables: dto.comparables ?? [],
+      pricing: assessment.pricing as unknown as Record<
+        string,
+        number | boolean
+      > | null,
+      result: assessment.evaluation as unknown as Record<string, unknown>,
       notes: dto.notes,
     });
 
@@ -74,7 +98,8 @@ export class FilterService {
 
   /**
    * Solo los propios. El filtro va por `userId` y no solo por `_id`: sin eso,
-   * conocer un identificador bastaría para leer el análisis de otra persona.
+   * conocer un identificador bastaría para leer la evaluación de otra
+   * persona.
    */
   async findAll(userId: string) {
     const rows = await this.model
@@ -86,24 +111,24 @@ export class FilterService {
   }
 
   async findOne(userId: string, id: string) {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new NotFoundException('No encontramos ese análisis.');
-    }
-    const row = await this.model
-      .findOne({ _id: id, userId: new Types.ObjectId(userId) })
-      .exec();
-    if (!row) throw new NotFoundException('No encontramos ese análisis.');
+    const row = await this.owned(userId, id);
     return this.sanitize(row);
   }
 
   async remove(userId: string, id: string): Promise<void> {
+    await this.owned(userId, id);
+    await this.model.deleteOne({ _id: id }).exec();
+  }
+
+  private async owned(userId: string, id: string): Promise<AnalysisDocument> {
     if (!Types.ObjectId.isValid(id)) {
-      throw new NotFoundException('No encontramos ese análisis.');
+      throw new NotFoundException('No encontramos esa evaluación.');
     }
-    const deleted = await this.model
-      .findOneAndDelete({ _id: id, userId: new Types.ObjectId(userId) })
+    const row = await this.model
+      .findOne({ _id: id, userId: new Types.ObjectId(userId) })
       .exec();
-    if (!deleted) throw new NotFoundException('No encontramos ese análisis.');
+    if (!row) throw new NotFoundException('No encontramos esa evaluación.');
+    return row;
   }
 
   private sanitize(row: AnalysisDocument) {
@@ -111,6 +136,7 @@ export class FilterService {
       id: row.id,
       projectName: row.projectName,
       location: row.location ?? null,
+      answers: row.answers ?? {},
       listedPrice: row.listedPrice,
       areaM2: row.areaM2,
       comparables: row.comparables.map((c) => ({
@@ -118,11 +144,8 @@ export class FilterService {
         areaM2: c.areaM2,
         price: c.price,
       })),
-      deedCostRate: row.deedCostRate,
-      taxRate: row.taxRate,
-      refurbishCost: row.refurbishCost,
-      safetyMarginRate: row.safetyMarginRate,
-      result: row.result as unknown as FilterResult,
+      pricing: row.pricing as unknown as FilterResult | null,
+      result: row.result as unknown as Evaluation,
       notes: row.notes ?? null,
       createdAt: (row as unknown as { createdAt: Date }).createdAt,
     };

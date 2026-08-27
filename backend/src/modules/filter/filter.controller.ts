@@ -21,16 +21,17 @@ import { FilterService } from './filter.service';
 export class FilterController {
   constructor(private readonly filterService: FilterService) {}
 
-  @Get('defaults')
-  defaults() {
-    return this.filterService.defaults();
+  /** Los criterios y sus pesos: el formulario se dibuja a partir de esto. */
+  @Get('form')
+  form() {
+    return this.filterService.form();
   }
 
-  /** Calcula sin guardar, para que el resultado se vea mientras se escribe. */
+  /** Evalúa sin guardar, para que el resultado se vea mientras se responde. */
   @HttpCode(HttpStatus.OK)
-  @Post('preview')
-  preview(@Body() dto: CreateAnalysisDto) {
-    return this.filterService.preview(dto);
+  @Post('assess')
+  assess(@Body() dto: CreateAnalysisDto) {
+    return this.filterService.assess(dto);
   }
 
   @Post()
