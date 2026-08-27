@@ -20,7 +20,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "backfill:status": "ts-node -r tsconfig-paths/register src/scripts/backfill-user-status.ts",
     "seed:admin": "ts-node -r tsconfig-paths/register src/scripts/seed-admin.ts",
-    "migrate:roles": "ts-node -r tsconfig-paths/register src/scripts/drop-advisor-role.ts"
+    "migrate:roles": "ts-node -r tsconfig-paths/register src/scripts/drop-advisor-role.ts",
+    "seed:admin:prod": "node dist/scripts/seed-admin",
+    "backfill:status:prod": "node dist/scripts/backfill-user-status",
+    "migrate:roles:prod": "node dist/scripts/drop-advisor-role"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -84,5 +87,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

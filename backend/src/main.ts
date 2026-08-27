@@ -32,7 +32,12 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(config.getOrThrow<number>('port'));
+  /**
+   * El host va explícito. En un contenedor —Render, Railway, Docker— un
+   * servidor que solo escucha en localhost no recibe nada de fuera, y el
+   * despliegue queda «arriba» sin responder a nadie.
+   */
+  await app.listen(config.getOrThrow<number>('port'), '0.0.0.0');
 }
 
 void bootstrap();
