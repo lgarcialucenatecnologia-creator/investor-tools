@@ -181,6 +181,17 @@
   }
 }
 
+/* ============================================================
+   Panel: la página no se desplaza, solo su contenido
+
+   `:has()` deja expresar «mientras el panel esté montado», que es
+   exactamente la condición: en la portada y en el acceso el documento sí
+   debe poder desplazarse con normalidad.
+   ============================================================ */
+body:has(.app-shell) {
+  overflow: hidden;
+}
+
 /* Selección de texto en dorado, coherente con la identidad */
 ::selection {
   background-color: var(--color-dorado);

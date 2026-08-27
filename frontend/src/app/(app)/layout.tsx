@@ -17,12 +17,20 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SessionProvider user={user}>
-      {/* `h-dvh` y no `min-h-screen`: con el mínimo, el contenedor crece con
-          el contenido y la página entera se desplaza, llevándose el menú.
-          Fijando la altura a la ventana y ocultando su desbordamiento, lo
-          único que se desplaza es el contenido. `dvh` en vez de `vh` porque
-          en el móvil la barra del navegador aparece y desaparece. */}
-      <div className="flex h-dvh flex-col overflow-hidden lg:flex-row">
+      {/*
+        El panel se saca del flujo con `fixed inset-0`, no se le da una
+        altura. La diferencia importa: con una altura, basta que CUALQUIER
+        otra cosa del documento ocupe espacio para que la página crezca y
+        aparezca una segunda barra de desplazamiento — y Next reparte el
+        contenido en bloques temporales antes de colocarlo en su sitio.
+        Fuera del flujo, nada de eso puede empujar nada.
+
+        La clase `app-shell` es el ancla de la regla de globals.css que
+        además impide que el documento se desplace mientras el panel esté
+        montado. Dos candados en vez de uno, porque este defecto ya volvió
+        dos veces.
+      */}
+      <div className="app-shell fixed inset-0 flex flex-col overflow-hidden lg:flex-row">
         <MobileBar />
         <Sidebar />
         <main className="min-w-0 flex-1 overflow-y-auto px-6 py-10 lg:px-12 lg:py-14">
