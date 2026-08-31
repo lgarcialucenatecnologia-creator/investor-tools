@@ -120,6 +120,18 @@ export const configuration = () => {
       taxRate: rate('FILTER_TAX_RATE', 0.015),
       safetyMarginRate: rate('FILTER_SAFETY_MARGIN_RATE', 0.05),
     },
+    /**
+     * Consultor Luifer. La clave NO es obligatoria para arrancar: sin ella el
+     * resto de la plataforma funciona igual y solo falla la subida del
+     * documento, con un mensaje que lo explica.
+     */
+    gemini: {
+      apiKey: process.env.GEMINI_API_KEY ?? null,
+      /** Transcribe el PDF. Trabajo de lectura fina, una sola vez. */
+      extractionModel: process.env.GEMINI_EXTRACTION_MODEL ?? 'gemini-2.5-pro',
+      /** Responde en el chat. Se paga en cada mensaje. */
+      chatModel: process.env.GEMINI_CHAT_MODEL ?? 'gemini-2.5-flash',
+    },
     activation: {
       /** Plazo para crear la contraseña desde que el asesor da el alta. */
       ttlHours: positiveInt('ACTIVATION_TTL_HOURS', 72),

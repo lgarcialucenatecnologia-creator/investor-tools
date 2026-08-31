@@ -150,3 +150,32 @@ export interface Analysis {
   notes: string | null;
   createdAt: string;
 }
+
+/* ---------- Consultor Luifer · base de conocimiento ---------- */
+
+export type KnowledgeStatus = 'draft' | 'active' | 'archived';
+
+export interface KnowledgeSummary {
+  id: string;
+  version: number;
+  sourceFileName: string;
+  pageCount: number;
+  charCount: number;
+  sectionCount?: number;
+  status: KnowledgeStatus;
+  activatedAt: string | null;
+  createdAt: string;
+  notes: string | null;
+}
+
+export interface KnowledgeSection {
+  order: number;
+  title: string;
+  body: string;
+  /** Lo corrigió una persona después de la extracción. */
+  edited: boolean;
+}
+
+export interface KnowledgeDetail extends KnowledgeSummary {
+  sections: KnowledgeSection[];
+}
