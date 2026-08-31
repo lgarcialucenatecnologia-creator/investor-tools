@@ -59,13 +59,15 @@ export class KnowledgeService {
 
     const markdown = await extractPdf(
       this.gemini(),
-      this.config.getOrThrow<string>('gemini.extractionModel'),
+      this.config.getOrThrow<string[]>('gemini.extractionModels'),
       file.path,
       pageCount,
-      ({ batch, batches, fromPage, toPage }) =>
-        this.logger.log(
-          `  tanda ${batch}/${batches} · páginas ${fromPage}–${toPage}`,
-        ),
+      ({ batch, batches, fromPage, toPage, retrying }) =>
+        retrying
+          ? this.logger.warn(`  ${retrying}`)
+          : this.logger.log(
+              `  tanda ${batch}/${batches} · páginas ${fromPage}–${toPage}`,
+            ),
     );
 
     const last = await this.model

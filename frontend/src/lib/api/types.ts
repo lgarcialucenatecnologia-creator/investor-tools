@@ -179,3 +179,32 @@ export interface KnowledgeSection {
 export interface KnowledgeDetail extends KnowledgeSummary {
   sections: KnowledgeSection[];
 }
+
+/* ---------- Consultor Luifer · conversaciones ---------- */
+
+export type Author = 'person' | 'consultant';
+
+export interface ChatMessage {
+  author: Author;
+  text: string;
+  at: string;
+}
+
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  messageCount: number;
+  lastMessageAt: string;
+}
+
+export interface ConversationDetail {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+}
+
+/** Lo que llega por el flujo de la respuesta. */
+export type ChatEvent =
+  | { type: 'chunk'; text: string }
+  | { type: 'done'; conversationId: string }
+  | { type: 'error'; message: string };

@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { withFallback, withRetry } from '../../common/resilience/retry';
 
 /**
  * Convierte el PDF del método en Markdown limpio.
@@ -19,7 +20,13 @@ import { GoogleGenAI } from '@google/genai';
  * contexto. Pedirlo entero devuelve un texto truncado a la mitad, y lo peor
  * es que se trunca en silencio.
  */
-const PAGES_PER_BATCH = 12;
+/**
+ * 20 y no 12: cada tanda es una llamada, y cada llamada una oportunidad de
+ * fallar por saturación del modelo. Menos tandas es menos riesgo. 20 páginas
+ * de este documento son unas 7.000 palabras, muy por debajo del límite de
+ * salida — el margen sigue siendo amplio.
+ */
+const PAGES_PER_BATCH = 20;
 
 const PROMPT = `Transcribe a Markdown las páginas {RANGE} de este documento.
 
@@ -50,19 +57,47 @@ export interface ExtractionProgress {
   batches: number;
   fromPage: number;
   toPage: number;
+  /** Presente solo cuando la tanda falló y se está reintentando. */
+  retrying?: string;
 }
 
+/**
+ * CADENA DE RESPALDO ENTRE MODELOS.
+ *
+ * Los reintentos con espera creciente resuelven una saturación pasajera. No
+ * resuelven una sostenida: contra el documento real, un modelo devolvió 503
+ * cuatro veces seguidas en la misma tanda y tiró por tierra las cuatro
+ * anteriores.
+ *
+ * Así que si un modelo sigue saturado tras agotar los reintentos, se pasa al
+ * siguiente en vez de abandonar la transcripción. La calidad baja un poco;
+ * quedarse sin nada es mucho peor.
+ */
 export async function extractPdf(
   client: GoogleGenAI,
-  model: string,
+  models: string[],
   filePath: string,
   pageCount: number,
   onProgress?: (progress: ExtractionProgress) => void,
 ): Promise<string> {
-  const uploaded = await client.files.upload({
-    file: filePath,
-    config: { mimeType: 'application/pdf' },
-  });
+  const uploaded = await withRetry(
+    'subida del archivo',
+    () =>
+      client.files.upload({
+        file: filePath,
+        config: { mimeType: 'application/pdf' },
+      }),
+    {
+      onRetry: (message) =>
+        onProgress?.({
+          batch: 0,
+          batches: 0,
+          fromPage: 0,
+          toPage: 0,
+          retrying: message,
+        }),
+    },
+  );
 
   if (!uploaded.uri || !uploaded.mimeType) {
     throw new Error(
@@ -78,28 +113,48 @@ export async function extractPdf(
     const toPage = Math.min(pageCount, fromPage + PAGES_PER_BATCH - 1);
     onProgress?.({ batch: index + 1, batches, fromPage, toPage });
 
-    const response = await client.models.generateContent({
-      model,
-      contents: [
-        {
-          role: 'user',
-          parts: [
+    const response = await withFallback(
+      models,
+      `páginas ${fromPage}–${toPage}`,
+      (model) =>
+        client.models.generateContent({
+          model,
+          contents: [
             {
-              fileData: { fileUri: uploaded.uri, mimeType: uploaded.mimeType },
-            },
-            {
-              text: PROMPT.replace(
-                '{RANGE}',
-                fromPage === toPage ? `${fromPage}` : `${fromPage} a ${toPage}`,
-              ),
+              role: 'user',
+              parts: [
+                {
+                  fileData: {
+                    fileUri: uploaded.uri,
+                    mimeType: uploaded.mimeType,
+                  },
+                },
+                {
+                  text: PROMPT.replace(
+                    '{RANGE}',
+                    fromPage === toPage
+                      ? `${fromPage}`
+                      : `${fromPage} a ${toPage}`,
+                  ),
+                },
+              ],
             },
           ],
-        },
-      ],
-      // Temperatura al mínimo: esto es transcripción, no redacción. Cualquier
-      // creatividad aquí es una alteración del material de Luifer.
-      config: { temperature: 0 },
-    });
+          // Temperatura al mínimo: esto es transcripción, no redacción.
+          // Cualquier creatividad aquí altera el material de Luifer.
+          config: { temperature: 0 },
+        }),
+      {
+        onRetry: (message) =>
+          onProgress?.({
+            batch: index + 1,
+            batches,
+            fromPage,
+            toPage,
+            retrying: message,
+          }),
+      },
+    );
 
     const text = response.text?.trim();
     if (!text) {

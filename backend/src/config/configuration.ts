@@ -127,10 +127,33 @@ export const configuration = () => {
      */
     gemini: {
       apiKey: process.env.GEMINI_API_KEY ?? null,
-      /** Transcribe el PDF. Trabajo de lectura fina, una sola vez. */
-      extractionModel: process.env.GEMINI_EXTRACTION_MODEL ?? 'gemini-2.5-pro',
-      /** Responde en el chat. Se paga en cada mensaje. */
-      chatModel: process.env.GEMINI_CHAT_MODEL ?? 'gemini-2.5-flash',
+      /**
+       * Transcribe el PDF. Lectura fina de un documento diseñado, una sola
+       * vez por versión: aquí importa la fidelidad, no el precio.
+       */
+      /**
+       * En orden de preferencia. Si el primero está saturado se usa el
+       * siguiente: es mejor una transcripción algo menos fina que ninguna.
+       */
+      extractionModels: (
+        process.env.GEMINI_EXTRACTION_MODELS ??
+        'gemini-3.7-flash,gemini-3.5-flash,gemini-2.5-flash'
+      )
+        .split(',')
+        .map((name) => name.trim())
+        .filter(Boolean),
+      /**
+       * Responde en el chat, en orden de preferencia. Esto sí se paga en cada
+       * mensaje. El primero es el que se cachea; caer a otro cuesta más,
+       * porque el caché es de un modelo concreto y el material tiene que
+       * viajar en línea.
+       */
+      chatModels: (
+        process.env.GEMINI_CHAT_MODELS ?? 'gemini-3.5-flash,gemini-2.5-flash'
+      )
+        .split(',')
+        .map((name) => name.trim())
+        .filter(Boolean),
     },
     activation: {
       /** Plazo para crear la contraseña desde que el asesor da el alta. */

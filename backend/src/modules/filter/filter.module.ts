@@ -12,5 +12,6 @@ import { Analysis, AnalysisSchema } from './schemas/analysis.schema';
   ],
   controllers: [FilterController],
   providers: [FilterService],
+  exports: [FilterService],
 })
 export class FilterModule {}
