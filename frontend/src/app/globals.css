@@ -939,3 +939,197 @@ html[data-intro="pending"] body::before {
   -webkit-mask-image: radial-gradient(120% 90% at 20% 10%, #000 0%, transparent 78%);
   mask-image: radial-gradient(120% 90% at 20% 10%, #000 0%, transparent 78%);
 }
+
+/* ============================================================
+   Documento imprimible
+
+   Fondo claro y tinta oscura, al revés que toda la aplicación. No es una
+   preferencia: los navegadores imprimen SIN fondos salvo que el usuario
+   marque la casilla de gráficos de fondo, que viene desactivada. Un
+   documento oscuro saldría en blanco con la letra blanca — o sea, vacío.
+
+   El dorado se conserva, pero solo en trazos y texto, nunca como relleno.
+   ============================================================ */
+.doc {
+  --tinta: #1a1520;
+  --tinta-suave: #5c5760;
+  --papel: #ffffff;
+  --linea: #d8d4cf;
+  --dorado-doc: #9a7415; /* Más oscuro que el de pantalla: 5.1:1 sobre papel */
+  --alerta-doc: #a3392a;
+
+  min-height: 100vh;
+  background-color: var(--papel);
+  color: var(--tinta);
+  font-family: var(--font-sans);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.sheet {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 3rem 2.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+}
+
+.doc-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 2px solid var(--tinta);
+}
+.doc-eyebrow {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+.doc-title {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  line-height: 1.15;
+}
+.doc-sub {
+  margin: 0.35rem 0 0;
+  color: var(--tinta-suave);
+}
+.doc-brand {
+  text-align: right;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--tinta-suave);
+}
+.doc-date { margin: 0.2rem 0 0; }
+
+/* ---- Veredicto ---- */
+.doc-verdict {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.75rem;
+  padding: 1.5rem;
+  border: 1px solid var(--linea);
+  border-left-width: 5px;
+  border-radius: 4px;
+}
+.doc-verdict--verde { border-left-color: var(--dorado-doc); }
+.doc-verdict--amarillo { border-left-color: #b8860b; }
+.doc-verdict--rojo { border-left-color: var(--alerta-doc); }
+.doc-verdict--indeterminado { border-left-color: var(--tinta-suave); }
+
+.doc-verdict-score {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+.doc-score {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.doc-score-max { font-size: 0.9rem; color: var(--tinta-suave); }
+.doc-verdict-label {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+}
+.doc-verdict-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--tinta-suave);
+}
+.doc-summary {
+  margin: 0.85rem 0 0;
+  line-height: 1.6;
+}
+
+/* ---- Secciones ---- */
+.doc-h2 {
+  margin: 0 0 0.9rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--linea);
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.doc-table th {
+  padding: 0.4rem 0;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+  border-bottom: 1px solid var(--linea);
+}
+.doc-table td {
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--linea);
+  vertical-align: top;
+}
+.doc-table tr:last-child td { border-bottom: 0; }
+.doc-table .right { text-align: right; }
+.doc-table .nums { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.doc-table .strong { font-weight: 600; }
+.doc-table .strong-row td {
+  font-weight: 600;
+  border-top: 2px solid var(--tinta);
+  color: var(--dorado-doc);
+}
+.doc-table--answers td:first-child { width: 68%; color: var(--tinta-suave); }
+
+.doc-list, .doc-steps {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  line-height: 1.55;
+}
+.doc-alert { color: var(--alerta-doc); }
+
+.doc-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  color: var(--tinta-suave);
+}
+
+.doc-foot {
+  margin-top: 0.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--linea);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--tinta-suave);
+}
+.doc-foot p { margin: 0; }
+
+/* ---- Al imprimir ---- */
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+  .doc { min-height: 0; }
+  .sheet { max-width: none; padding: 0; gap: 1.6rem; }
+  /* Una sección no debe partirse entre dos hojas si cabe entera. */
+  .doc-verdict,
+  .doc-table,
+  .doc-steps,
+  .doc-list {
+    break-inside: avoid;
+  }
+  .doc-h2 { break-after: avoid; }
+}

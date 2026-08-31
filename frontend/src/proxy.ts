@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
  *
  * En Next 16 este archivo se llama `proxy.ts`; `middleware.ts` quedó atrás.
  */
-const PROTECTED = ['/dashboard', '/admin'];
+const PROTECTED = ['/dashboard', '/admin', '/imprimir'];
 
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
@@ -33,5 +33,5 @@ export function proxy(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/imprimir/:path*', '/login'],
 };

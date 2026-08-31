@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Save } from 'lucide-react';
+import { Clock, FileDown, Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api } from '@/lib/api/client';
 import type { Analysis, Assessment, FilterForm } from '@/lib/api/types';
-import { money, shortDate } from '@/lib/format';
 import {
   ComparablesField,
   emptyComparable,
@@ -15,6 +14,7 @@ import {
   type ComparableDraft,
 } from './comparables-field';
 import { CriterionField } from './criterion-field';
+import { HistoryDialog } from './history-dialog';
 import { MoneyInput } from './money-input';
 import { ResultPanel } from './result-panel';
 
@@ -39,7 +39,9 @@ export function FilterScreen({
   const [history, setHistory] = useState<Analysis[]>(initialHistory);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState<string | null>(null);
+  const [saved, setSaved] = useState<Analysis | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const asked = useMemo(
     () => form.criteria.filter((c) => !c.derived),
@@ -97,7 +99,7 @@ export function FilterScreen({
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      setSaved(analysis.projectName);
+      setSaved(analysis);
       setHistory(await api<Analysis[]>('/filter'));
     } catch (caught) {
       setError((caught as Error).message);
@@ -106,9 +108,30 @@ export function FilterScreen({
     }
   }
 
+  async function handleDelete(analysis: Analysis) {
+    if (
+      !window.confirm(
+        `¿Borrar la evaluación de ${analysis.projectName}? No se puede deshacer.`,
+      )
+    ) {
+      return;
+    }
+    setDeletingId(analysis.id);
+    try {
+      await api(`/filter/${analysis.id}`, { method: 'DELETE' });
+      setHistory(await api<Analysis[]>('/filter'));
+      if (saved?.id === analysis.id) setSaved(null);
+    } catch (caught) {
+      setError((caught as Error).message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-10">
-      <header>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
         <p className="text-xs uppercase tracking-[0.24em] text-grafito-texto">
           Antes de comprar
         </p>
@@ -119,6 +142,21 @@ export function FilterScreen({
           Pon el proyecto que te ofrecieron y responde lo que sepas. Lo que no
           sepas también cuenta: te dice qué preguntar antes de firmar.
         </p>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setHistoryOpen(true)}
+        >
+          <Clock size={15} />
+          Histórico
+          {history.length > 0 && (
+            <span className="ml-1 rounded bg-dorado px-1.5 text-xs tabular-nums text-obsidiana">
+              {history.length}
+            </span>
+          )}
+        </Button>
       </header>
 
       <section className="grid gap-5 rounded-lg border border-grafito/20 bg-nocturno p-7 md:grid-cols-2">
@@ -235,10 +273,24 @@ export function FilterScreen({
                 </>
               )}
             </Button>
+            {/* El PDF se genera del registro guardado, no de lo que hay en
+                pantalla: así el documento y lo almacenado siempre coinciden. */}
             {saved && (
-              <span role="status" className="text-sm text-dorado">
-                «{saved}» quedó guardada abajo.
-              </span>
+              <>
+                <Button asChild type="button" variant="outline">
+                  <a
+                    href={`/imprimir/filtro/${saved.id}`}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    <FileDown size={15} />
+                    Descargar PDF
+                  </a>
+                </Button>
+                <span role="status" className="text-sm text-dorado">
+                  «{saved.projectName}» quedó guardada en el histórico.
+                </span>
+              </>
             )}
           </div>
         </>
@@ -249,50 +301,13 @@ export function FilterScreen({
         </p>
       )}
 
-      {history.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-grafito-texto">
-            Lo que ya pasaste por el filtro
-          </h2>
-          <ul className="flex flex-col gap-2">
-            {history.map((item) => (
-              <li
-                key={item.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-grafito/20 bg-nocturno px-5 py-4"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-marfil">{item.projectName}</p>
-                  <p className="text-xs text-grafito-texto">
-                    {item.location ? `${item.location} · ` : ''}
-                    {shortDate.format(new Date(item.createdAt))}
-                    {item.pricing
-                      ? ` · máx. ${money(item.pricing.maxPrice)}`
-                      : ''}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm tabular-nums text-marfil/70">
-                    {item.result.score ?? '—'} · {item.result.confidence}%
-                  </span>
-                  <span
-                    className={`whitespace-nowrap rounded border px-2 py-0.5 text-xs ${
-                      item.result.verdict === 'verde'
-                        ? 'border-dorado/40 bg-dorado/10 text-dorado'
-                        : item.result.verdict === 'amarillo'
-                          ? 'border-oro/40 bg-oro/10 text-oro'
-                          : item.result.verdict === 'rojo'
-                            ? 'border-alerta/40 bg-alerta/10 text-alerta'
-                            : 'border-grafito/40 text-grafito-texto'
-                    }`}
-                  >
-                    {item.result.label}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <HistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        history={history}
+        onDelete={(item) => void handleDelete(item)}
+        deletingId={deletingId}
+      />
     </div>
   );
 }
