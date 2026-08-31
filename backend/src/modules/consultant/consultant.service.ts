@@ -186,10 +186,12 @@ export class ConsultantService {
        * el material EN LÍNEA: la respuesta cuesta más y es igual de buena.
        * Preferimos eso a decirle a alguien «vuelve más tarde».
        */
+      let answeredWith = models[0];
       const stream = await withFallback(
         models,
         'respuesta del Consultor',
         async (model, isFallback) => {
+          answeredWith = model;
           const useCache = Boolean(grounding.cacheName) && !isFallback;
           return client.models.generateContentStream({
             model,
@@ -239,14 +241,19 @@ export class ConsultantService {
           yield { type: 'chunk', text: rest };
         }
       }
+      if (answeredWith !== models[0]) {
+        this.logger.warn(`Respondió con el respaldo: ${answeredWith}`);
+      }
     } catch (error) {
       this.logger.error(
         `Fallo al responder: ${String(error instanceof Error ? error.message : error).slice(0, 200)}`,
       );
+      // Se dice qué pasó de verdad —el proveedor está saturado— en vez de un
+      // «error inesperado» que hace pensar que se rompió la plataforma.
       yield {
         type: 'error',
         message:
-          'No pude responder en este momento. Vuelve a intentarlo en un rato.',
+          'El servicio de respuestas está con mucha demanda en este momento y no logré conectarme. Tu pregunta no se perdió: vuelve a enviarla en un minuto.',
       };
       return;
     }

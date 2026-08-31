@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Loader2, MessageSquarePlus, Send, Trash2 } from 'lucide-react';
+import { Loader2, MessageSquarePlus, RotateCcw, Send, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api/client';
 import { readChatStream } from '@/lib/consultant-stream';
@@ -32,6 +32,14 @@ export function ChatScreen({
   const [streaming, setStreaming] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * La pregunta que falló, guardada para poder reintentarla.
+   *
+   * Sin esto, un pico de demanda del proveedor obliga a reescribir lo que ya
+   * se había escrito. Y como la pregunta ya se pintó en pantalla, se ve como
+   * si el Consultor la hubiera ignorado.
+   */
+  const [failed, setFailed] = useState<string | null>(null);
 
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -78,6 +86,7 @@ export function ChatScreen({
 
     setBusy(true);
     setError(null);
+    setFailed(null);
     setDraft('');
     setMessages((prev) => [
       ...prev,
@@ -122,12 +131,18 @@ export function ChatScreen({
       ]);
     } catch (caught) {
       setError((caught as Error).message);
-      // Lo que ya había llegado no se descarta: puede ser media respuesta útil.
       if (answer) {
+        // Media respuesta se conserva: puede ser útil, y borrarla sería
+        // tirar algo que ya se pagó.
         setMessages((prev) => [
           ...prev,
           { author: 'consultant', text: answer, at: new Date().toISOString() },
         ]);
+      } else {
+        // Sin nada que mostrar, se retira la pregunta de la pantalla y se
+        // guarda para reintentar: dejarla suelta ahí parece que la ignoró.
+        setMessages((prev) => prev.slice(0, -1));
+        setFailed(clean);
       }
     } finally {
       setStreaming('');
@@ -233,11 +248,30 @@ export function ChatScreen({
         </div>
 
         {error && (
-          <p
+          <div
             role="alert"
-            className="mt-3 rounded-md border border-alerta/40 bg-alerta/10 px-4 py-3 text-sm text-alerta"
+            className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-alerta/40 bg-alerta/10 px-4 py-3 text-sm text-alerta"
           >
-            {error}
+            <p className="min-w-0 flex-1">{error}</p>
+            {failed && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() => void send(failed)}
+              >
+                <RotateCcw size={14} />
+                Reintentar
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* La pregunta que no salió queda visible: se ve que no se perdió. */}
+        {failed && !busy && (
+          <p className="mt-2 text-xs text-grafito-texto">
+            Sin enviar: «{failed.length > 90 ? `${failed.slice(0, 90)}…` : failed}»
           </p>
         )}
 

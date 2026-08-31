@@ -149,7 +149,8 @@ export const configuration = () => {
        * viajar en línea.
        */
       chatModels: (
-        process.env.GEMINI_CHAT_MODELS ?? 'gemini-3.5-flash,gemini-2.5-flash'
+        process.env.GEMINI_CHAT_MODELS ??
+        'gemini-3.5-flash,gemini-2.5-flash,gemini-3-flash-preview'
       )
         .split(',')
         .map((name) => name.trim())
