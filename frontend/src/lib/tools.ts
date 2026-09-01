@@ -36,16 +36,16 @@ export const TOOLS: Tool[] = [
   },
   {
     slug: 'ruta',
-    name: 'Mi Ruta Patrimonial',
-    tagline: 'Tu plan año a año',
+    name: 'Mi Ruta de 90 Días',
+    tagline: 'Qué hacer y en qué orden',
     description:
-      'Sabes qué sigue, cuándo y por qué — sin improvisar.',
+      'El plan del método, en tres bloques de treinta días. Sabes qué sigue, cuándo y por qué — sin improvisar.',
     promises: [
-      'Tu plan escrito, año por año, con lo que toca hacer en cada uno',
-      'Qué pasa si adelantas o aplazas una compra',
-      'El avance real contra lo que planeaste',
+      'Tu rango de compra: hasta cuánto puedes ir sin desorganizarte',
+      'Qué toca hacer en cada bloque, y por qué importa',
+      'El avance se demuestra con trabajo hecho, no con casillas',
     ],
-    ready: false,
+    ready: true,
   },
   {
     slug: 'consultor',

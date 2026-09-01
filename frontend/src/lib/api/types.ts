@@ -208,3 +208,64 @@ export type ChatEvent =
   | { type: 'chunk'; text: string }
   | { type: 'done'; conversationId: string }
   | { type: 'error'; message: string };
+
+/* ---------- Mi Ruta de 90 Días ---------- */
+
+export interface StartingPoint {
+  city?: string;
+  propertyType?: string;
+  availableCash: number;
+  safetyReserve: number;
+  monthlyIncome: number;
+  monthlyObligations: number;
+  possibleCredit: number;
+  goal?: string;
+  mainDifficulty?: string;
+}
+
+export interface RangeAlert {
+  severity: 'critica' | 'atencion';
+  message: string;
+}
+
+export interface BuyingRange {
+  forOperation: number;
+  maxBudget: number;
+  maxInstallment: number;
+  reserveShare: number;
+  alerts: RangeAlert[];
+}
+
+export interface RouteTask {
+  id: string;
+  label: string;
+  why: string;
+  done: boolean;
+  /** Cómo quedó hecha: a mano, o demostrada con trabajo en la plataforma. */
+  source: 'manual' | 'demostrada' | null;
+  /** Si no es nulo, la tarea se marca sola y no se puede tocar. */
+  provenBy: string | null;
+}
+
+export interface RouteBlock {
+  id: string;
+  order: number;
+  fromDay: number;
+  toDay: number;
+  stages: string;
+  goal: string;
+  caveat: string;
+  tasks: RouteTask[];
+  done: number;
+  total: number;
+  current: boolean;
+}
+
+export interface RouteOverview {
+  started: boolean;
+  startedAt?: string;
+  day: number;
+  range: BuyingRange | null;
+  startingPoint: StartingPoint | null;
+  blocks: RouteBlock[];
+}

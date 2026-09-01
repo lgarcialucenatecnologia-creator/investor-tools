@@ -20,7 +20,7 @@ El producto está inspirado **funcionalmente** en el ecosistema InvestorTools de
 
 **Lo esencial:** su dashboard **no calcula nada**, es un hub que enlaza productos en dominios separados (la calculadora del Número vive fuera, la comunidad fuera, el bot en WhatsApp). Solo el Check List es nativo. Su onboarding obliga al cliente a enlazar cuentas entre tres productos — estados reales suyos: *"Celular listo, falta Investor Plan"*.
 
-👉 **Nuestra ventaja es la integración:** el Índice y Mi Ruta Patrimonial nativos, en la misma app, sin enlaces de cuentas. Eso es justo lo que su copy promete y su producto no cumple.
+👉 **Nuestra ventaja es la integración:** el Índice y Mi Ruta de 90 Días nativos, en la misma app, sin enlaces de cuentas. Eso es justo lo que su copy promete y su producto no cumple.
 
 ---
 
@@ -119,13 +119,13 @@ Comunica **protección activa**, no crecimiento — coherente con el dolor #2 de
 
 | Función | Nombre del módulo |
 | --- | --- |
-| Plan patrimonial año a año | **Mi Ruta Patrimonial** |
+| Plan de implementación del método | **Mi Ruta de 90 Días** |
 | Mentor/asesor vía WhatsApp | **Consultor Luifer** (evitar la palabra "IA" visible en el naming de cara al usuario) |
 | Evaluador de proyectos inmobiliarios | **Filtro de Seguridad** |
 
 ### Copy de referencia para hero/landing
 
-> "Descubre tu **Índice de Blindaje Patrimonial** y accede a **Mi Ruta Patrimonial**, **Consultor Luifer** y el **Filtro de Seguridad** — todo en un solo lugar, sin ruido ni promesas vacías."
+> "Descubre tu **Índice de Blindaje Patrimonial** y accede a **Mi Ruta de 90 Días**, **Consultor Luifer** y el **Filtro de Seguridad** — todo en un solo lugar, sin ruido ni promesas vacías."
 
 **Nota:** este naming es la **base inicial**. Módulos y funciones adicionales se irán agregando y documentando en este archivo a medida que se definan con el cliente.
 
@@ -201,7 +201,7 @@ Gracias a eso, **cualquier componente de shadcn o 21st.dev entra ya pintado con 
 ## 9. Convenciones de código
 
 - **Identificadores en inglés, texto de cara al usuario en español.** Evita el Spanglish en el código sin traducir la experiencia del cliente.
-- **Los nombres de producto NUNCA se traducen ni se abrevian:** Índice de Blindaje Patrimonial, Mi Ruta Patrimonial, Consultor Luifer, Filtro de Seguridad.
+- **Los nombres de producto NUNCA se traducen ni se abrevian:** Índice de Blindaje Patrimonial, Mi Ruta de 90 Días, Consultor Luifer, Filtro de Seguridad.
 - **Mensajes de error del API en español**, en tono calmado y sin alarmismo — coherentes con la regla de oro (sección 2).
 - **Colores siempre por token de marca** (`bg-obsidiana`, `text-dorado`), nunca hex sueltos ni la paleta por defecto de Tailwind.
 - ⚠️ **`text-grafito` y `text-azul` no se usan para texto** — 4.1:1 y 3.1:1 sobre el fondo, no pasan WCAG AA. Para metadata usa `text-grafito-texto` (4.9:1); `azul` solo como fondo o borde.

@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { FilterModule } from './modules/filter/filter.module';
 import { ConsultantModule } from './modules/consultant/consultant.module';
 import { KnowledgeModule } from './modules/knowledge/knowledge.module';
+import { RouteModule } from './modules/route/route.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -39,6 +40,7 @@ import { UsersModule } from './modules/users/users.module';
     FilterModule,
     KnowledgeModule,
     ConsultantModule,
+    RouteModule,
   ],
   providers: [
     // Todas las rutas exigen JWT salvo las marcadas con @Public()

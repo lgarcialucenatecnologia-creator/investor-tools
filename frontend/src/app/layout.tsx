@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s | Pensionate con Bienes Raíces",
   },
   description:
-    "Descubre tu Índice de Blindaje Patrimonial y accede a Mi Ruta Patrimonial, Consultor Luifer y el Filtro de Seguridad — todo en un solo lugar, sin ruido ni promesas vacías.",
+    "Descubre tu Índice de Blindaje Patrimonial y accede a Mi Ruta de 90 Días, Consultor Luifer y el Filtro de Seguridad — todo en un solo lugar, sin ruido ni promesas vacías.",
 };
 
 // Corre en el primer frame, antes de que React monte la Secuencia de Apertura:
