@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "nest start --watch",
+    "start:dev": "node scripts/dev.mjs",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -23,7 +23,8 @@
     "migrate:roles": "ts-node -r tsconfig-paths/register src/scripts/drop-advisor-role.ts",
     "seed:admin:prod": "node dist/scripts/seed-admin",
     "backfill:status:prod": "node dist/scripts/backfill-user-status",
-    "migrate:roles:prod": "node dist/scripts/drop-advisor-role"
+    "migrate:roles:prod": "node dist/scripts/drop-advisor-role",
+    "start:dev:plain": "nest start --watch"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",

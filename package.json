@@ -1,0 +1,16 @@
+{
+  "name": "investor-tools",
+  "private": true,
+  "description": "Plataforma de Luifer — backend NestJS y frontend Next.js",
+  "scripts": {
+    "dev": "concurrently --names api,web --prefix-colors yellow,cyan --kill-others-on-fail \"npm --prefix backend run start:dev\" \"npm --prefix frontend run dev\"",
+    "stop": "node scripts/stop.mjs",
+    "typecheck": "npm --prefix backend exec tsc -- --noEmit && npm --prefix frontend exec tsc -- --noEmit",
+    "lint": "npm --prefix backend run lint && npm --prefix frontend run lint",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "check": "npm run typecheck && npm run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

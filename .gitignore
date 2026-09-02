@@ -22,3 +22,6 @@ npm-debug.log*
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Dependencias del arrancador de la raíz
+/node_modules
