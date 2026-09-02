@@ -41,10 +41,17 @@ export function UserTable({
   }
 
   return (
-    // La tabla desborda dentro de su caja: en un teléfono se desplaza ella,
-    // no la página entera.
+    /**
+     * La tabla se desplaza dentro de su caja: en un teléfono se mueve ella y
+     * no la página entera.
+     *
+     * El ancho mínimo bajó de 54rem a 46rem porque en un escritorio normal
+     * 54rem quedaba a un pelo del contenedor y aparecía una barra horizontal
+     * con el tirador casi lleno — una barra que no servía para nada, porque
+     * no había nada que desplazar.
+     */
     <div className="overflow-x-auto rounded-lg border border-grafito/20">
-      <table className="w-full min-w-[54rem] border-collapse text-sm">
+      <table className="w-full min-w-[46rem] border-collapse text-sm">
         <thead>
           <tr className="border-b border-grafito/20 bg-nocturno text-left">
             {['Usuario', 'Rol', 'Estado', 'Vence', 'Último ingreso'].map((h) => (
@@ -64,9 +71,13 @@ export function UserTable({
 
             return (
               <tr key={user.id} className="border-b border-grafito/10 last:border-0">
-                <td className="px-4 py-3">
-                  <p className="text-marfil">{user.fullName}</p>
-                  <p className="text-xs text-grafito-texto">{user.email}</p>
+                <td className="max-w-[18rem] px-4 py-3">
+                  <p className="truncate text-marfil">{user.fullName}</p>
+                  {/* El correo se corta si hace falta. Un correo largo
+                      empujaba la tabla y provocaba el desborde. */}
+                  <p className="truncate text-xs text-grafito-texto">
+                    {user.email}
+                  </p>
                   {user.phone && (
                     <p className="text-xs text-grafito-texto">{user.phone}</p>
                   )}

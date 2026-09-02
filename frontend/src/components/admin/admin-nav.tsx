@@ -19,8 +19,17 @@ export function AdminNav() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Administración" className="border-b border-grafito/20">
-      <ul className="flex gap-1 overflow-x-auto">
+    /**
+     * La línea inferior la forman los propios enlaces, no un borde del `nav`.
+     *
+     * Antes el enlace activo llevaba `-mb-px` para montarse sobre el borde
+     * del contenedor. Ese píxel desbordaba el `<ul>` por abajo, y como el
+     * `<ul>` tiene `overflow-x-auto`, el navegador convierte el eje vertical
+     * en `auto` también: aparecía una barra de desplazamiento vertical por UN
+     * píxel. Sin márgenes negativos no hay desborde y no hay barra.
+     */
+    <nav aria-label="Administración">
+      <ul className="flex overflow-x-auto">
         {TABS.map((tab) => {
           // Coincidencia exacta: sin esto «/admin» quedaría activo también
           // estando en «/admin/conocimiento».
@@ -30,10 +39,10 @@ export function AdminNav() {
               <Link
                 href={tab.href}
                 aria-current={active ? 'page' : undefined}
-                className={`-mb-px block whitespace-nowrap border-b-2 px-4 py-3 text-sm transition-colors ${
+                className={`block whitespace-nowrap border-b-2 px-4 py-3 text-sm transition-colors ${
                   active
                     ? 'border-dorado text-dorado'
-                    : 'border-transparent text-grafito-texto hover:text-marfil'
+                    : 'border-grafito/20 text-grafito-texto hover:border-grafito/50 hover:text-marfil'
                 }`}
               >
                 {tab.label}
@@ -41,6 +50,9 @@ export function AdminNav() {
             </li>
           );
         })}
+        {/* Continúa la línea hasta el borde: sin esto se corta donde acaba
+            la última pestaña y parece un subrayado a medias. */}
+        <li aria-hidden className="flex-1 border-b-2 border-grafito/20" />
       </ul>
     </nav>
   );

@@ -1184,3 +1184,43 @@ html[data-intro="pending"] body::before {
     50%      { opacity: 0.9; }
   }
 }
+
+/* ============================================================
+   Barras de desplazamiento
+
+   La aplicación es oscura y el navegador pinta las suyas en claro: donde una
+   barra es necesaria —el chat, la revisión de secciones— quedaba una franja
+   blanca que se lee como un error de maquetación.
+
+   Se dejan finas y en gris grafito. Visibles cuando sirven, invisibles
+   cuando no.
+   ============================================================ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-grafito) 55%, transparent)
+    transparent;
+}
+
+/* WebKit no entiende las dos propiedades de arriba, así que va aparte. */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, var(--color-grafito) 55%, transparent);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklab, var(--color-grafito) 85%, transparent);
+}
+
+/* La esquina donde se cruzan dos barras: sin esto queda un cuadro claro. */
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
