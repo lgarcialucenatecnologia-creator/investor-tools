@@ -1133,3 +1133,54 @@ html[data-intro="pending"] body::before {
   }
   .doc-h2 { break-after: avoid; }
 }
+
+/* ============================================================
+   Espera del Consultor
+
+   No es un spinner. Es una línea que se traza de izquierda a derecha, el
+   mismo gesto del plano de la Secuencia de Apertura: algo que se está
+   dibujando, no algo que gira sin avanzar.
+
+   Se eligió así por la regla de oro del proyecto — orden y calma, nunca
+   urgencia. Un spinner acelerado transmite prisa; una línea que avanza
+   transmite trabajo en curso.
+   ============================================================ */
+.tracing {
+  position: relative;
+  height: 1px;
+  overflow: hidden;
+  background-color: color-mix(in oklab, var(--color-grafito) 40%, transparent);
+}
+
+.tracing::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inline-size: 38%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-dorado) 45%,
+    var(--color-oro) 55%,
+    transparent
+  );
+  animation: tracing-sweep 1.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes tracing-sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(363%); }
+}
+
+/* Quien pidió menos movimiento recibe la misma información sin barrido. */
+@media (prefers-reduced-motion: reduce) {
+  .tracing::after {
+    inline-size: 100%;
+    animation: tracing-breathe 2.4s ease-in-out infinite;
+    background: var(--color-dorado);
+  }
+  @keyframes tracing-breathe {
+    0%, 100% { opacity: 0.25; }
+    50%      { opacity: 0.9; }
+  }
+}

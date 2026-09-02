@@ -203,8 +203,12 @@ export interface ConversationDetail {
   messages: ChatMessage[];
 }
 
+/** En qué va la espera. Los emite el backend según lo que hace de verdad. */
+export type ChatStep = 'material' | 'preparando' | 'pensando';
+
 /** Lo que llega por el flujo de la respuesta. */
 export type ChatEvent =
+  | { type: 'step'; step: ChatStep }
   | { type: 'chunk'; text: string }
   | { type: 'done'; conversationId: string }
   | { type: 'error'; message: string };

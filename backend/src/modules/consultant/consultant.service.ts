@@ -20,8 +20,12 @@ import {
   ConversationDocument,
 } from './schemas/conversation.schema';
 
+/** En qué va la espera. Son los pasos REALES, no una barra decorativa. */
+export type ChatStep = 'material' | 'preparando' | 'pensando';
+
 /** Lo que sale hacia el navegador, trozo a trozo. */
 export type ChatEvent =
+  | { type: 'step'; step: ChatStep }
   | { type: 'chunk'; text: string }
   | { type: 'done'; conversationId: string }
   | { type: 'error'; message: string };
@@ -127,9 +131,16 @@ export class ConsultantService {
   ): AsyncGenerator<ChatEvent> {
     const firstName = await this.firstNameOf(userId);
     const client = this.gemini();
-    const grounding = await this.cache.ground(client);
 
-    if (!grounding) {
+    /**
+     * CADA PASO SE ANUNCIA ANTES DE ESPERARLO, no después. Es la única forma
+     * de que la pantalla diga la verdad: si el caché hay que crearlo, quien
+     * pregunta ve «preparando el material» DURANTE esos segundos.
+     */
+    yield { type: 'step', step: 'material' };
+    const active = await this.cache.activeVersion();
+
+    if (!active) {
       yield {
         type: 'error',
         message:
@@ -137,6 +148,11 @@ export class ConsultantService {
       };
       return;
     }
+
+    if (this.cache.needsCache(active)) {
+      yield { type: 'step', step: 'preparando' };
+    }
+    const grounding = await this.cache.groundFor(client, active);
 
     const conversation = conversationId
       ? await this.byId(userId, conversationId)
@@ -174,6 +190,8 @@ export class ConsultantService {
           { role: 'model', parts: [{ text: 'Entendido.' }] },
         ]
       : [];
+
+    yield { type: 'step', step: 'pensando' };
 
     const guard = new StreamGuard();
     let answer = '';

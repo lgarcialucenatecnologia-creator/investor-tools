@@ -35,10 +35,37 @@ export class CacheService {
     private readonly config: ConfigService,
   ) {}
 
-  async ground(client: GoogleGenAI): Promise<Grounding | null> {
-    const active = await this.knowledge.findActive();
-    if (!active) return null;
+  /**
+   * SE ABRE EN TRES PIEZAS a propósito.
+   *
+   * La primera versión acumulaba los pasos en un arreglo y los soltaba al
+   * terminar: en pantalla los tres aparecían de golpe y luego venían cinco
+   * segundos de silencio. Justo lo contrario de lo que se buscaba.
+   *
+   * Separado así, quien llama puede anunciar cada paso ANTES de esperarlo.
+   */
+  activeVersion(): Promise<KnowledgeVersionDocument | null> {
+    return this.knowledge.findActive();
+  }
 
+  /**
+   * ¿Hay que crear el caché? Es la espera larga —diez a quince segundos— y
+   * pasa una vez por hora, no en cada mensaje. Sin avisarlo parece una caída.
+   */
+  needsCache(active: KnowledgeVersionDocument): boolean {
+    // Cinco minutos de margen: un caché que vence a mitad de la respuesta
+    // deja la petición a medias, y eso se ve peor que no cachear.
+    return !(
+      active.cacheName &&
+      active.cacheExpiresAt &&
+      active.cacheExpiresAt.getTime() - Date.now() > 300_000
+    );
+  }
+
+  async groundFor(
+    client: GoogleGenAI,
+    active: KnowledgeVersionDocument,
+  ): Promise<Grounding> {
     const cacheName = await this.ensureCache(client, active);
     return {
       cacheName,
@@ -57,14 +84,7 @@ export class CacheService {
     client: GoogleGenAI,
     active: KnowledgeVersionDocument,
   ): Promise<string | null> {
-    // Un margen de cinco minutos: un caché que vence a mitad de la respuesta
-    // deja la petición a medias, y eso se ve peor que no cachear.
-    const stillFresh =
-      active.cacheName &&
-      active.cacheExpiresAt &&
-      active.cacheExpiresAt.getTime() - Date.now() > 300_000;
-
-    if (stillFresh) return active.cacheName;
+    if (!this.needsCache(active)) return active.cacheName;
 
     try {
       // El caché se ata al modelo principal. Si más tarde hay que responder

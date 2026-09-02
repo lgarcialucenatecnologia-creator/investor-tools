@@ -8,10 +8,12 @@ import { readChatStream } from '@/lib/consultant-stream';
 import { shortDate } from '@/lib/format';
 import type {
   ChatMessage,
+  ChatStep,
   ConversationDetail,
   ConversationSummary,
 } from '@/lib/api/types';
 import { MessageBubble } from './message-bubble';
+import { Tracing } from './tracing';
 
 const ARRANQUES = [
   '¿Por dónde empiezo el programa?',
@@ -31,6 +33,10 @@ export function ChatScreen({
   const [draft, setDraft] = useState('');
   const [streaming, setStreaming] = useState('');
   const [busy, setBusy] = useState(false);
+  /** En qué va la espera. Lo dice el backend, no lo adivina la pantalla. */
+  const [step, setStep] = useState<ChatStep | null>(null);
+  /** Esperas de las otras dos peticiones: abrir y borrar una conversación. */
+  const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   /**
    * La pregunta que falló, guardada para poder reintentarla.
@@ -50,6 +56,7 @@ export function ChatScreen({
 
   async function open(id: string) {
     setError(null);
+    setLoadingId(id);
     try {
       const detail = await api<ConversationDetail>(
         `/consultant/conversations/${id}`,
@@ -59,6 +66,8 @@ export function ChatScreen({
       setStreaming('');
     } catch (caught) {
       setError((caught as Error).message);
+    } finally {
+      setLoadingId(null);
     }
   }
 
@@ -71,12 +80,15 @@ export function ChatScreen({
 
   async function remove(id: string) {
     if (!window.confirm('¿Borrar esta conversación? No se puede deshacer.')) return;
+    setLoadingId(id);
     try {
       await api(`/consultant/conversations/${id}`, { method: 'DELETE' });
       setConversations((prev) => prev.filter((item) => item.id !== id));
       if (activeId === id) fresh();
     } catch (caught) {
       setError((caught as Error).message);
+    } finally {
+      setLoadingId(null);
     }
   }
 
@@ -87,6 +99,7 @@ export function ChatScreen({
     setBusy(true);
     setError(null);
     setFailed(null);
+    setStep('material');
     setDraft('');
     setMessages((prev) => [
       ...prev,
@@ -112,7 +125,11 @@ export function ChatScreen({
       }
 
       for await (const event of readChatStream(response.body)) {
-        if (event.type === 'chunk') {
+        if (event.type === 'step') {
+          setStep(event.step);
+        } else if (event.type === 'chunk') {
+          // La primera palabra retira la espera: ya no hay nada que anunciar.
+          setStep(null);
           answer += event.text;
           setStreaming(answer);
         } else if (event.type === 'done') {
@@ -146,6 +163,7 @@ export function ChatScreen({
       }
     } finally {
       setStreaming('');
+      setStep(null);
       setBusy(false);
     }
   }
@@ -167,7 +185,12 @@ export function ChatScreen({
         {conversations.length > 0 && (
           <ul className="flex max-h-40 flex-col gap-1 overflow-y-auto lg:max-h-none">
             {conversations.map((item) => (
-              <li key={item.id} className="group flex items-center gap-1">
+              <li
+                key={item.id}
+                className={`group flex items-center gap-1 transition-opacity ${
+                  loadingId === item.id ? 'opacity-40' : ''
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => void open(item.id)}
@@ -199,7 +222,11 @@ export function ChatScreen({
 
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="flex-1 overflow-y-auto">
-          {messages.length === 0 && !streaming ? (
+          {loadingId && messages.length === 0 && !streaming ? (
+            <div className="py-8">
+              <Tracing label="Abriendo la conversación" />
+            </div>
+          ) : messages.length === 0 && !streaming ? (
             <div className="flex flex-col gap-6 py-8">
               <div>
                 <h2 className="font-display text-2xl text-marfil">
@@ -236,12 +263,7 @@ export function ChatScreen({
               {streaming && (
                 <MessageBubble author="consultant" text={streaming} pending />
               )}
-              {busy && !streaming && (
-                <div className="flex items-center gap-2 px-2 text-sm text-grafito-texto">
-                  <Loader2 className="animate-spin" size={14} />
-                  Pensando…
-                </div>
-              )}
+              {busy && !streaming && <Tracing step={step ?? 'material'} />}
             </div>
           )}
           <div ref={bottom} />
