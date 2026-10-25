@@ -7,6 +7,10 @@ const pesos = new Intl.NumberFormat('es-CO', {
 const plain = new Intl.NumberFormat('es-CO');
 
 export const money = (value: number) => pesos.format(value);
+
+/** En millones, para gráficas y cifras grandes: «$1.250 M». */
+export const millions = (value: number) =>
+  `${value < 0 ? '−' : ''}$${plain.format(Math.round(Math.abs(value) / 1_000_000))} M`;
 export const number = (value: number) => plain.format(value);
 export const percent = (rate: number) =>
   `${plain.format(Math.round(rate * 1000) / 10)}%`;

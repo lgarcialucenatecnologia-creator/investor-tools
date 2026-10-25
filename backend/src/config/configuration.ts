@@ -108,17 +108,15 @@ export const configuration = () => {
       defaultMonths: positiveInt('ACCESS_DEFAULT_MONTHS', 12),
     },
     /**
-     * Valores por defecto del Filtro de Seguridad. Cada análisis puede usar
-     * otros; estos son los que trae puesto el formulario.
+     * Mi Meta de Pensión. La rentabilidad es NETA y REAL (ya descontada la
+     * inflación), así todo el cálculo queda en pesos de hoy y nadie confunde
+     * una meta inflada por la inflación con más riqueza.
      *
-     * ⚠️ Pendiente de que Luifer los fije con su criterio: los costos de
-     * escrituración e impuestos varían por municipio y por tipo de negocio,
-     * y el margen de seguridad es una decisión de método, no un dato.
+     * Por defecto 15% anual, valor definido por el equipo. Cada persona puede
+     * escribir la suya en la calculadora.
      */
-    filter: {
-      deedCostRate: rate('FILTER_DEED_COST_RATE', 0.02),
-      taxRate: rate('FILTER_TAX_RATE', 0.015),
-      safetyMarginRate: rate('FILTER_SAFETY_MARGIN_RATE', 0.05),
+    pension: {
+      defaultReturnRate: rate('PENSION_DEFAULT_RETURN_RATE', 0.15),
     },
     /**
      * Consultor Luifer. La clave NO es obligatoria para arrancar: sin ella el

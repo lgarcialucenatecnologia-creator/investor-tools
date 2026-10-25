@@ -4,6 +4,8 @@ import { UserRole } from '../../modules/users/schemas/user.schema';
 export interface AuthenticatedUser {
   userId: string;
   email: string;
+  /** Para saludar por el nombre; ya viene con el usuario que se carga. */
+  fullName: string;
   role: UserRole;
   /** Sesión (dispositivo) con la que se autenticó esta petición. */
   sessionId: string;

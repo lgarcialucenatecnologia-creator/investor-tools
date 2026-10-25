@@ -7,8 +7,17 @@
  * calcula nada — es más honesto que esconderla, porque el cliente ya pagó
  * por las cuatro.
  */
+import {
+  ClipboardCheck,
+  MessagesSquare,
+  Route,
+  Target,
+  type LucideIcon,
+} from 'lucide-react';
+
 export interface Tool {
   slug: string;
+  icon: LucideIcon;
   name: string;
   /** Frase corta para el menú. */
   tagline: string;
@@ -22,20 +31,8 @@ export interface Tool {
 
 export const TOOLS: Tool[] = [
   {
-    slug: 'indice',
-    name: 'Índice de Blindaje Patrimonial',
-    tagline: 'Tu diagnóstico',
-    description:
-      'Qué tan protegido está lo que ya construiste, y dónde está la grieta.',
-    promises: [
-      'Un número que resume qué tan blindado está tu patrimonio hoy',
-      'Las tres grietas más grandes, ordenadas por lo que te costaría cada una',
-      'Qué mover primero, sin tener que entender de finanzas',
-    ],
-    ready: false,
-  },
-  {
     slug: 'ruta',
+    icon: Route,
     name: 'Mi Ruta de 90 Días',
     tagline: 'Qué hacer y en qué orden',
     description:
@@ -48,29 +45,45 @@ export const TOOLS: Tool[] = [
     ready: true,
   },
   {
+    slug: 'pension',
+    icon: Target,
+    name: 'Mi Meta de Pensión',
+    tagline: 'Cuánto necesitas para vivir de rentas',
+    description:
+      'El capital que, solo con sus rentas, paga tu vida sin tocarlo. Cuánto tienes, cuánto te falta y cuándo llegas a tu ritmo.',
+    promises: [
+      'Tu meta: el capital que paga tus gastos sin gastarse',
+      'Cuánto te falta y en cuántos años llegas',
+      'Qué cambia si vendes un activo o reduces gastos',
+    ],
+    ready: true,
+  },
+  {
     slug: 'consultor',
+    icon: MessagesSquare,
     name: 'Consultor Luifer',
     tagline: 'Acompañamiento directo',
     description:
       'Resuelve tus dudas por WhatsApp, con el mismo criterio con el que Luifer estructura su propio patrimonio.',
     promises: [
       'Preguntas respondidas por WhatsApp, sin agendar nada',
-      'Respuestas que conocen tu Índice y tu Ruta, no genéricas',
+      'Respuestas que conocen tu Ruta y tus proyectos, no genéricas',
       'Lo que hablaron queda guardado acá',
     ],
     ready: false,
     accent: true,
   },
   {
-    slug: 'filtro',
-    name: 'Filtro de Seguridad',
-    tagline: 'Antes de comprar',
+    slug: 'checklist',
+    icon: ClipboardCheck,
+    name: 'Check List',
+    tagline: 'Punto por punto',
     description:
-      'Pasa el proyecto por el filtro. Si no cumple, no entra. Así de simple.',
+      'Revisa el proyecto criterio por criterio, a medida que averiguas cada punto. Tus observaciones quedan guardadas con el proyecto.',
     promises: [
-      'El proyecto contra los comparables reales de la zona',
-      'Tu precio máximo, con escrituración e impuestos incluidos',
-      'Un sí o un no, con las razones escritas',
+      'Doce criterios con su guía: qué mirar y qué preguntar',
+      'Cada punto calificado de 1 a 5, con tus observaciones',
+      'Varios proyectos guardados para compararlos con calma',
     ],
     ready: true,
   },

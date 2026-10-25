@@ -7,6 +7,7 @@ export type UserStatus = 'pending_activation' | 'active' | 'suspended';
 export interface SessionUser {
   userId: string;
   email: string;
+  fullName: string;
   role: UserRole;
   sessionId: string;
 }
@@ -40,115 +41,139 @@ export interface Paginated<T> {
   pages: number;
 }
 
-/* ---------- Filtro de Seguridad ---------- */
+/* ---------- Check List ---------- */
 
-export type CategoryId = 'legal' | 'builder' | 'location' | 'financial' | 'fit';
-export type Verdict = 'verde' | 'amarillo' | 'rojo' | 'sin_datos';
+export type ProjectType = 'vis' | 'no_vis';
 
-export interface Category {
-  id: CategoryId;
-  name: string;
-  description: string;
-  weight: number;
-}
+export type ChecklistStatus =
+  | 'sin_evaluar'
+  | 'incompleto'
+  | 'solido'
+  | 'revisar'
+  | 'debil'
+  | 'no_pasa';
 
-export interface Choice {
-  value: string;
-  label: string;
-  score: number;
-}
-
-export interface Criterion {
+export interface ChecklistItem {
   id: string;
-  category: CategoryId;
-  question: string;
-  help: string;
+  title: string;
   weight: number;
+  guide: string;
+  scale: { low: string; high: string };
   knockout?: boolean;
-  choices: Choice[];
-  unknownAction: string;
-  /** Sale de los comparables; no se pregunta. */
-  derived?: boolean;
+  appliesTo?: ProjectType;
 }
 
-export interface FilterDefaults {
-  deedCostRate: number;
-  taxRate: number;
-  safetyMarginRate: number;
-  refurbishCost: number;
+export interface ChecklistSection {
+  id: string;
+  name: string;
+  weight: number;
+  items: ChecklistItem[];
 }
 
-export interface FilterForm {
-  categories: Category[];
-  criteria: Criterion[];
-  defaults: FilterDefaults;
+export interface ChecklistForm {
+  sections: ChecklistSection[];
 }
 
-export interface Comparable {
-  reference: string;
-  areaM2: number;
-  price: number;
-}
-
-/** Cada paso de la comparación de precio, para poder explicarla. */
-export interface Pricing {
-  medianPricePerM2: number;
-  marketValue: number;
-  listedVsMarket: number;
-  deedCost: number;
-  taxCost: number;
-  refurbishCost: number;
-  entryCosts: number;
-  safetyMargin: number;
-  maxPrice: number;
-  gainAtMaxPrice: number;
-  passes: boolean;
-}
-
-export interface CategoryScore {
-  id: CategoryId;
+export interface ChecklistSectionResult {
+  id: string;
   name: string;
   weight: number;
   score: number | null;
-  answered: number;
+  evaluated: number;
   total: number;
 }
 
-export interface Alert {
-  criterionId: string;
-  question: string;
-  severity: 'critica' | 'atencion';
-  message: string;
+export interface ChecklistWeakItem {
+  itemId: string;
+  title: string;
+  sectionName: string;
+  rating: number;
+  knockout: boolean;
 }
 
-export interface Evaluation {
+export interface ChecklistEvaluation {
   score: number | null;
-  confidence: number;
-  verdict: Verdict;
+  coverage: number;
+  evaluated: number;
+  total: number;
+  status: ChecklistStatus;
   label: string;
   summary: string;
-  categories: CategoryScore[];
-  alerts: Alert[];
-  nextSteps: { criterionId: string; action: string }[];
+  sections: ChecklistSectionResult[];
+  weakItems: ChecklistWeakItem[];
 }
 
-export interface Assessment {
-  evaluation: Evaluation;
-  pricing: Pricing | null;
-}
-
-export interface Analysis {
+/** Lo que lista el selector de proyectos. */
+export interface ChecklistSummary {
   id: string;
   projectName: string;
-  location: string | null;
-  answers: Record<string, string>;
-  listedPrice: number | null;
-  areaM2: number | null;
-  comparables: Comparable[];
-  pricing: Pricing | null;
-  result: Evaluation;
-  notes: string | null;
+  projectType: ProjectType;
+  score: number | null;
+  status: ChecklistStatus;
+  label: string;
+  evaluated: number;
+  total: number;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface SavedChecklist {
+  id: string;
+  projectName: string;
+  projectType: ProjectType;
+  ratings: Record<string, number>;
+  notes: Record<string, string>;
+  result: ChecklistEvaluation;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/* ---------- Mi Meta de Pensión ---------- */
+
+export type PensionGoal = 'gastos' | 'ingreso';
+
+export interface CashEvent {
+  label: string;
+  /** Positivo = entra al capital; negativo = sale. */
+  amount: number;
+  /** 0 = hoy. */
+  month: number;
+}
+
+export interface PensionInput {
+  monthlyIncome: number;
+  additionalIncome: number;
+  monthlyExpenses: number;
+  expenseReduction: number;
+  goal: PensionGoal;
+  annualReturnRate: number;
+  events: CashEvent[];
+}
+
+export interface PensionResult {
+  totalIncome: number;
+  adjustedExpenses: number;
+  monthlyInvestable: number;
+  targetMonthlyIncome: number;
+  targetCapital: number;
+  startingCapital: number;
+  gap: number;
+  progress: number;
+  reachedInMonths: number | null;
+  yearly: { year: number; capital: number }[];
+  monthlyNeededForReference: number;
+  referenceYears: number;
+  annualReturnRate: number;
+  monthlyReturnRate: number;
+}
+
+export interface PensionOverview {
+  saved: boolean;
+  input: PensionInput;
+  prefilledFromRoute: boolean;
+  result: PensionResult | null;
+  defaultReturnRate: number;
+  updatedAt: string | null;
 }
 
 /* ---------- Consultor Luifer · base de conocimiento ---------- */

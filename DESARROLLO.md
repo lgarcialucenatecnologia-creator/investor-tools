@@ -65,8 +65,7 @@ Estas existen en `.env.example` y no en `backend/.env`, así que corren con el
 valor por defecto del código. Funciona, pero conviene saberlo porque cambiar
 uno de esos valores exige declararlo primero:
 
-`ACCESS_DEFAULT_MONTHS` · `ACTIVATION_TTL_HOURS` · `FILTER_DEED_COST_RATE` ·
-`FILTER_SAFETY_MARGIN_RATE` · `FILTER_TAX_RATE` ·
+`ACCESS_DEFAULT_MONTHS` · `ACTIVATION_TTL_HOURS` · `PENSION_DEFAULT_RETURN_RATE` ·
 `SELF_REGISTRATION_ENABLED` · `SESSION_MAX_PER_USER` ·
 `SESSION_ROTATION_GRACE_MS` · `TRUST_PROXY_HOPS`
 

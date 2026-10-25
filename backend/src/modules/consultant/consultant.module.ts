@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { FilterModule } from '../filter/filter.module';
+import { ChecklistModule } from '../checklist/checklist.module';
 import { KnowledgeModule } from '../knowledge/knowledge.module';
 import { UsersModule } from '../users/users.module';
 import { CacheService } from './cache.service';
@@ -17,7 +17,7 @@ import {
       { name: Conversation.name, schema: ConversationSchema },
     ]),
     KnowledgeModule,
-    FilterModule,
+    ChecklistModule,
     UsersModule,
   ],
   controllers: [ConsultantController],

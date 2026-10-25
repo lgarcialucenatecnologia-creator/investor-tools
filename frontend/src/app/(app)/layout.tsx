@@ -33,8 +33,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <div className="app-shell fixed inset-0 flex flex-col overflow-hidden lg:flex-row">
         <MobileBar />
         <Sidebar />
-        <main className="min-w-0 flex-1 overflow-y-auto px-6 py-10 lg:px-12 lg:py-14">
-          <div className="mx-auto w-full max-w-4xl">{children}</div>
+        {/* El ancho lo decide cada página: el inicio usa todo (es un bento),
+            los formularios se encogen a una columna legible con
+            `PageContainer`. */}
+        <main className="min-w-0 flex-1 overflow-y-auto px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
+          <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
       </div>
     </SessionProvider>

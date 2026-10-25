@@ -107,7 +107,7 @@ export function KnowledgeScreen({
               return (
                 <li
                   key={item.id}
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-grafito/20 bg-nocturno px-5 py-4"
+                  className="flex flex-wrap items-center justify-between gap-4 surface px-5 py-4"
                 >
                   <div className="min-w-0">
                     <p className="text-marfil">

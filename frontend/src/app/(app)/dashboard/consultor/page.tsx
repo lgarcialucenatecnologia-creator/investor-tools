@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { MessagesSquare } from 'lucide-react';
+import { PageContainer, PageHeader } from '@/components/app/page-header';
 import { ChatScreen } from '@/components/consultant/chat-screen';
 import type { ConversationSummary } from '@/lib/api/types';
 import { fetchWithSession } from '@/lib/session/fetch-server';
@@ -13,17 +15,18 @@ export default async function ConsultorPage() {
   ).catch(() => [] as ConversationSummary[]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-8">
-      <header className="shrink-0">
-        <p className="text-xs uppercase tracking-[0.24em] text-grafito-texto">
-          Acompañamiento directo
-        </p>
-        <h1 className="mt-4 font-display text-3xl leading-tight text-marfil">
-          Consultor Luifer
-        </h1>
-      </header>
+    <PageContainer wide fill>
+      <div className="flex h-full min-h-0 flex-col gap-8">
+        <PageHeader
+          icon={MessagesSquare}
+          accent="azul"
+          eyebrow="Acompañamiento directo"
+          title="Consultor Luifer"
+          description="Tu guía del método cuando la necesites, con lo que ya hiciste en la plataforma. Las conversaciones quedan guardadas."
+        />
 
-      <ChatScreen initialConversations={conversations} />
-    </div>
+        <ChatScreen initialConversations={conversations} />
+      </div>
+    </PageContainer>
   );
 }

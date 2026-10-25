@@ -44,7 +44,7 @@ export function UploadPanel({ onUploaded }: { onUploaded: () => void }) {
   }
 
   return (
-    <section className="flex flex-col gap-5 rounded-lg border border-grafito/20 bg-nocturno p-7">
+    <section className="flex flex-col gap-5 surface p-7">
       <div>
         <h2 className="font-display text-xl text-marfil">
           Cargar el documento del método

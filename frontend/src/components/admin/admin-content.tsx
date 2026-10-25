@@ -119,7 +119,7 @@ export function AdminContent() {
           ].map((item) => (
             <div
               key={item.label}
-              className="rounded-lg border border-grafito/20 bg-nocturno px-5 py-4"
+              className="surface px-5 py-4"
             >
               <dt className="text-xs uppercase tracking-[0.14em] text-grafito-texto">
                 {item.label}

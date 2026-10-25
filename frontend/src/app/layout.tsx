@@ -11,7 +11,7 @@ const inter = Inter({
   display: "swap",
 });
 
-// Fraunces: titulares y el Índice — serif con autoridad, sin ser ostentosa.
+// Fraunces: titulares y cifras clave — serif con autoridad, sin ser ostentosa.
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
@@ -21,11 +21,11 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: {
-    default: "Índice de Blindaje Patrimonial | Pensionate con Bienes Raíces",
+    default: "Pensionate con Bienes Raíces",
     template: "%s | Pensionate con Bienes Raíces",
   },
   description:
-    "Descubre tu Índice de Blindaje Patrimonial y accede a Mi Ruta de 90 Días, Consultor Luifer y el Filtro de Seguridad — todo en un solo lugar, sin ruido ni promesas vacías.",
+    "Mi Ruta de 90 Días, Mi Meta de Pensión, Consultor Luifer y el Check List — todo en un solo lugar, sin ruido ni promesas vacías.",
 };
 
 // Corre en el primer frame, antes de que React monte la Secuencia de Apertura:

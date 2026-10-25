@@ -5,7 +5,10 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { FilterService } from '../filter/filter.service';
+import {
+  ChecklistService,
+  type SavedChecklist,
+} from '../checklist/checklist.service';
 import { StartingPointDto } from './dto/starting-point.dto';
 import { buildRange, type BuyingRange } from './route.math';
 import { BLOCKS, findTask, type Evidence } from './route.plan';
@@ -41,7 +44,7 @@ export interface BlockState {
 export class RouteService {
   constructor(
     @InjectModel(Route.name) private readonly model: Model<RouteDocument>,
-    private readonly filter: FilterService,
+    private readonly checklists: ChecklistService,
   ) {}
 
   async saveStartingPoint(userId: string, dto: StartingPointDto) {
@@ -136,19 +139,19 @@ export class RouteService {
       proven.add('rango-limpio');
     }
 
-    const analyses = await this.filter.findAll(userId).catch(() => []);
-    if (analyses.length > 0) proven.add('filtro-alguna');
+    const projects = await this.checklists
+      .findRecent(userId, 100)
+      .catch((): SavedChecklist[] => []);
+    if (projects.length > 0) proven.add('checklist-alguno');
 
-    for (const analysis of analyses) {
-      if (analysis.comparables.length >= 2) proven.add('filtro-comparables');
-      if (analysis.pricing?.maxPrice) proven.add('filtro-precio-maximo');
-      // Verde o rojo es una decisión tomada. Amarillo e indeterminado no:
-      // ahí el expediente sigue abierto, que es justo lo contrario.
-      if (
-        analysis.result.verdict === 'verde' ||
-        analysis.result.verdict === 'rojo'
-      ) {
-        proven.add('filtro-decidida');
+    for (const project of projects) {
+      if (project.ratings.precio_m2_zona !== undefined) {
+        proven.add('checklist-mercado');
+      }
+      // Sólido, débil o «no pasa» es una decisión tomada. «Revisa antes de
+      // avanzar» e «incompleto» no: ahí el expediente sigue abierto.
+      if (['solido', 'debil', 'no_pasa'].includes(project.result.status)) {
+        proven.add('checklist-decidido');
       }
     }
 
@@ -205,6 +208,15 @@ export class RouteService {
   private dayOf(startedAt: Date): number {
     const days = Math.floor((Date.now() - startedAt.getTime()) / 86_400_000);
     return Math.max(1, days + 1);
+  }
+
+  /**
+   * Solo el punto de partida, sin calcular nada. Lo usa Mi Meta de Pensión
+   * para no volver a preguntar ingresos y obligaciones que ya están aquí.
+   */
+  async startingPointOf(userId: string) {
+    const route = await this.byUser(userId);
+    return route?.startingPoint ?? null;
   }
 
   private byUser(userId: string): Promise<RouteDocument | null> {

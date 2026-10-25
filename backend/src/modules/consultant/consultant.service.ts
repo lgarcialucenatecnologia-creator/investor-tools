@@ -10,7 +10,10 @@ import { GoogleGenAI } from '@google/genai';
 import { Model, Types } from 'mongoose';
 import { withFallback } from '../../common/resilience/retry';
 import { StreamGuard } from '../knowledge/guardrails';
-import { FilterService } from '../filter/filter.service';
+import {
+  ChecklistService,
+  type SavedChecklist,
+} from '../checklist/checklist.service';
 import { UsersService } from '../users/users.service';
 import { CacheService } from './cache.service';
 import { buildFreshContext, buildSystemPrompt } from './system-prompt';
@@ -46,7 +49,7 @@ export class ConsultantService {
     @InjectModel(Conversation.name)
     private readonly model: Model<ConversationDocument>,
     private readonly cache: CacheService,
-    private readonly filter: FilterService,
+    private readonly checklists: ChecklistService,
     private readonly users: UsersService,
     private readonly config: ConfigService,
   ) {}
@@ -320,37 +323,34 @@ export class ConsultantService {
   }
 
   /**
-   * Sus propias evaluaciones del Filtro.
+   * Sus propios proyectos del Check List.
    *
    * Esto es lo que hace que sea el Consultor de Luifer y no un buscador con
-   * buenos modales: puede decir «tu evaluación de Torre Aralia salió en rojo
-   * por falta de fiducia» en vez de hablar en abstracto.
+   * buenos modales: puede decir «Torre Aralia no pasa porque no te mostraron
+   * la fiduciaria» en vez de hablar en abstracto.
    */
   private async ownData(userId: string): Promise<string | null> {
-    const analyses = await this.filter.findAll(userId).catch(() => []);
-    if (analyses.length === 0) return null;
+    const projects = await this.checklists
+      .findRecent(userId, 8)
+      .catch((): SavedChecklist[] => []);
+    if (projects.length === 0) return null;
 
-    const lines = analyses.slice(0, 8).map((item) => {
+    const lines = projects.map((item) => {
       const pieces = [
-        `- ${item.projectName}${item.location ? ` (${item.location})` : ''}`,
-        `veredicto: ${item.result.label}`,
+        `- ${item.projectName} (${item.projectType === 'vis' ? 'VIS' : 'NO VIS'})`,
+        `estado: ${item.result.label}`,
         `puntaje: ${item.result.score ?? 'sin dato'}`,
-        `contestado: ${item.result.confidence}%`,
+        `evaluados: ${item.result.evaluated}/${item.result.total}`,
       ];
-      if (item.pricing) {
-        pieces.push(
-          `precio máximo calculado: $${item.pricing.maxPrice.toLocaleString('es-CO')}`,
-        );
-      }
-      const steps = item.result.nextSteps
+      const weak = item.result.weakItems
         .slice(0, 3)
-        .map((step) => step.action)
+        .map((point) => `${point.title} (${point.rating}/5)`)
         .join('; ');
-      if (steps) pieces.push(`pendiente: ${steps}`);
+      if (weak) pieces.push(`puntos débiles: ${weak}`);
       return pieces.join(' · ');
     });
 
-    return `Evaluaciones que hizo en el Filtro de Seguridad:\n${lines.join('\n')}`;
+    return `Proyectos que evaluó en el Check List:\n${lines.join('\n')}`;
   }
 
   private asId(id: string): Types.ObjectId {

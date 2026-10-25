@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MoneyInput } from '@/components/filter/money-input';
+import { MoneyInput } from '@/components/ui/money-input';
 import { api } from '@/lib/api/client';
 import type { RouteOverview, StartingPoint } from '@/lib/api/types';
 
@@ -87,7 +87,7 @@ export function StartingPointForm({
   return (
     <form
       onSubmit={submit}
-      className="flex flex-col gap-6 rounded-lg border border-grafito/20 bg-nocturno p-7"
+      className="flex flex-col gap-6 surface p-7"
     >
       <div>
         <h2 className="font-display text-xl text-marfil">Punto de Partida</h2>

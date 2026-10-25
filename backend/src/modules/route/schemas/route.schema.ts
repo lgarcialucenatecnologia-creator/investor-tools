@@ -48,8 +48,8 @@ export const TaskMarkSchema = SchemaFactory.createForClass(TaskMark);
  *
  * Se guarda cuándo arrancó porque el día en que va no es un dato que se
  * declare: se cuenta. Y se guardan solo las marcas MANUALES — las tareas que
- * se demuestran con trabajo hecho en el Filtro se recalculan en cada consulta,
- * así que si alguien borra una evaluación su avance se ajusta solo.
+ * se demuestran con trabajo hecho en el Check List se recalculan en cada
+ * consulta, así que si alguien borra un proyecto su avance se ajusta solo.
  */
 @Schema({ timestamps: true, collection: 'routes' })
 export class Route {

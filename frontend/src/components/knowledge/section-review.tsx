@@ -59,7 +59,7 @@ export function SectionReview({
         return (
           <article
             key={section.order}
-            className="rounded-lg border border-grafito/20 bg-nocturno"
+            className="surface"
           >
             <header className="flex flex-wrap items-center justify-between gap-3 border-b border-grafito/15 px-5 py-3">
               <div className="flex items-center gap-3">

@@ -7,9 +7,10 @@ import { configuration } from './config/configuration';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { AuthModule } from './modules/auth/auth.module';
-import { FilterModule } from './modules/filter/filter.module';
+import { ChecklistModule } from './modules/checklist/checklist.module';
 import { ConsultantModule } from './modules/consultant/consultant.module';
 import { KnowledgeModule } from './modules/knowledge/knowledge.module';
+import { PensionModule } from './modules/pension/pension.module';
 import { RouteModule } from './modules/route/route.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -37,10 +38,11 @@ import { UsersModule } from './modules/users/users.module';
     }),
     UsersModule,
     AuthModule,
-    FilterModule,
     KnowledgeModule,
     ConsultantModule,
     RouteModule,
+    ChecklistModule,
+    PensionModule,
   ],
   providers: [
     // Todas las rutas exigen JWT salvo las marcadas con @Public()

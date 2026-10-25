@@ -20,7 +20,7 @@ El producto está inspirado **funcionalmente** en el ecosistema InvestorTools de
 
 **Lo esencial:** su dashboard **no calcula nada**, es un hub que enlaza productos en dominios separados (la calculadora del Número vive fuera, la comunidad fuera, el bot en WhatsApp). Solo el Check List es nativo. Su onboarding obliga al cliente a enlazar cuentas entre tres productos — estados reales suyos: *"Celular listo, falta Investor Plan"*.
 
-👉 **Nuestra ventaja es la integración:** el Índice y Mi Ruta de 90 Días nativos, en la misma app, sin enlaces de cuentas. Eso es justo lo que su copy promete y su producto no cumple.
+👉 **Nuestra ventaja es la integración:** Mi Ruta de 90 Días, Mi Meta de Pensión y el Check List nativos, en la misma app, sin enlaces de cuentas. Eso es justo lo que su copy promete y su producto no cumple.
 
 ---
 
@@ -94,7 +94,7 @@ Esto le da **autoridad humilde** — puede usarse en onboarding, landing o mensa
 | Negro Obsidiana | `#0C0812` | Fondo principal (60%) |
 | Violeta Nocturno | `#1A1125` | Profundidad, cards, contenedores, branding |
 | Dorado Inversión | `#D7A72E` | Títulos, CTAs, llamados a la acción (15%) |
-| Oro Luminoso | `#F2C85B` | Destellos y énfasis — con moderación, solo para el resultado clave (ej. el Índice) |
+| Oro Luminoso | `#F2C85B` | Destellos y énfasis — con moderación, solo para el resultado clave |
 | Blanco Marfil | `#F4F1EB` | Texto y copy largo (20%) — **NUNCA blanco puro** |
 | Gris Grafito | `#747078` | Información secundaria, metadata, fechas |
 | Azul Tecnológico | `#0A6680` | Acento opcional — ideal para el módulo de asesor/mentor (5%) |
@@ -107,13 +107,9 @@ Esto le da **autoridad humilde** — puede usarse en onboarding, landing o mensa
 
 ## 6. Naming del producto — YA DEFINIDO
 
-### Concepto ancla
+### Retirados (octubre 2026)
 
-_(equivalente al "Número de Seguridad Económica" de Londoño)_
-
-# 🛡️ Índice de Blindaje Patrimonial
-
-Comunica **protección activa**, no crecimiento — coherente con el dolor #2 del avatar (miedo a perder lo construido). Usar como **gancho principal** del funnel / landing.
+El **Índice de Blindaje Patrimonial** (nunca llegó a construirse) y el **Filtro de Seguridad** se retiraron de la plataforma. Las tareas de Mi Ruta que se demostraban con el Filtro ahora se demuestran con el Check List, y el Consultor lee los proyectos del Check List. La colección `property_analyses` de Atlas quedó sin uso, con los datos intactos. No volver a proponerlos sin hablarlo con el cliente.
 
 ### Módulos (naming cerrado, base inicial)
 
@@ -121,11 +117,16 @@ Comunica **protección activa**, no crecimiento — coherente con el dolor #2 de
 | --- | --- |
 | Plan de implementación del método | **Mi Ruta de 90 Días** |
 | Mentor/asesor vía WhatsApp | **Consultor Luifer** (evitar la palabra "IA" visible en el naming de cara al usuario) |
-| Evaluador de proyectos inmobiliarios | **Filtro de Seguridad** |
+| Revisión del proyecto criterio por criterio (12 criterios, 41 puntos, 1–5 con observaciones) | **Check List** |
+| Capital invertido que paga tu vida solo con sus rentas, y cuándo llegas | **Mi Meta de Pensión** |
+
+**Mi Meta de Pensión** es nuestra respuesta funcional al «Número de Seguridad Económica» de Londoño, con criterio propio: la meta vive de las **rentas** sin consumir el capital (perpetuidad), todo en **pesos de hoy** (rentabilidad neta después de inflación, por defecto `PENSION_DEFAULT_RETURN_RATE=0.15`, editable por cada persona), y arranca con los datos de Mi Ruta de 90 Días descontando la reserva de seguridad. ⛔ Nunca usar el nombre de Londoño en copy ni código.
+
+**Check List:** se va llenando durante días mientras la constructora responde, y guarda las observaciones de cada punto. Sus criterios y pesos viven en `backend/src/modules/checklist/checklist.criteria.ts` — **los pesos son provisionales hasta que Luifer los fije**.
 
 ### Copy de referencia para hero/landing
 
-> "Descubre tu **Índice de Blindaje Patrimonial** y accede a **Mi Ruta de 90 Días**, **Consultor Luifer** y el **Filtro de Seguridad** — todo en un solo lugar, sin ruido ni promesas vacías."
+> "**Mi Ruta de 90 Días**, **Mi Meta de Pensión**, **Consultor Luifer** y el **Check List** — todo en un solo lugar, sin ruido ni promesas vacías."
 
 **Nota:** este naming es la **base inicial**. Módulos y funciones adicionales se irán agregando y documentando en este archivo a medida que se definan con el cliente.
 
@@ -201,11 +202,11 @@ Gracias a eso, **cualquier componente de shadcn o 21st.dev entra ya pintado con 
 ## 9. Convenciones de código
 
 - **Identificadores en inglés, texto de cara al usuario en español.** Evita el Spanglish en el código sin traducir la experiencia del cliente.
-- **Los nombres de producto NUNCA se traducen ni se abrevian:** Índice de Blindaje Patrimonial, Mi Ruta de 90 Días, Consultor Luifer, Filtro de Seguridad.
+- **Los nombres de producto NUNCA se traducen ni se abrevian:** Mi Ruta de 90 Días, Mi Meta de Pensión, Consultor Luifer, Check List.
 - **Mensajes de error del API en español**, en tono calmado y sin alarmismo — coherentes con la regla de oro (sección 2).
 - **Colores siempre por token de marca** (`bg-obsidiana`, `text-dorado`), nunca hex sueltos ni la paleta por defecto de Tailwind.
 - ⚠️ **`text-grafito` y `text-azul` no se usan para texto** — 4.1:1 y 3.1:1 sobre el fondo, no pasan WCAG AA. Para metadata usa `text-grafito-texto` (4.9:1); `azul` solo como fondo o borde.
-- **El dorado se reserva para valor real** (CTAs y resultados). `oro` (#F2C85B) es exclusivo del resultado del Índice.
+- **El dorado se reserva para valor real** (CTAs y resultados). `oro` (#F2C85B) es exclusivo del resultado clave de cada herramienta.
 
 ---
 
@@ -218,7 +219,7 @@ investor-tools/
 │   └── src/app/
 │       ├── globals.css          # Tokens @theme de la paleta + contrastes verificados
 │       ├── layout.tsx           # Fuentes (Inter + Fraunces) y metadata
-│       ├── page.tsx             # Landing con el Índice como gancho
+│       ├── page.tsx             # Landing
 │       └── globals.css          # + puente de tokens shadcn → marca
 │   ├── components/ui/           # Componentes shadcn (no editar colores acá)
 │   └── lib/utils.ts             # cn() — clsx + tailwind-merge
@@ -231,7 +232,7 @@ investor-tools/
             └── auth/            # register · login · refresh · logout · me
 ```
 
-**Tipografía:** *Inter* para UI y copy largo, *Fraunces* (serif) para titulares y el Índice — autoridad sin ostentación.
+**Tipografía:** *Inter* para UI y copy largo, *Fraunces* (serif) para titulares y cifras clave — autoridad sin ostentación.
 
 ---
 
@@ -266,7 +267,7 @@ cd frontend && npm run dev
 
 **Pendiente — a definir con el cliente:**
 
-1. **Fórmula del Índice de Blindaje Patrimonial** — qué variables entran, cómo se ponderan y cómo se presenta el resultado. Es el gancho del funnel, es lo siguiente.
+1. Pesos definitivos del Check List y rentabilidad por defecto de Mi Meta de Pensión.
 2. Modelo de datos del patrimonio (propiedades, deudas, ingresos).
 3. Funciones concretas de cada módulo y sus wireframes.
 4. Integración de WhatsApp para Consultor Luifer.

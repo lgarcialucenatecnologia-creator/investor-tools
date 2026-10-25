@@ -34,7 +34,7 @@ export function UserTable({
 }) {
   if (users.length === 0) {
     return (
-      <p className="rounded-lg border border-grafito/20 bg-nocturno px-6 py-10 text-center text-grafito-texto">
+      <p className="surface px-6 py-10 text-center text-grafito-texto">
         No hay cuentas que coincidan.
       </p>
     );

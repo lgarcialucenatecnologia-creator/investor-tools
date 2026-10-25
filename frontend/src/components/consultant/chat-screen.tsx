@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Loader2, MessageSquarePlus, RotateCcw, Send, Trash2 } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Loader2,
+  MessageSquarePlus,
+  MessagesSquare,
+  RotateCcw,
+  Send,
+  Trash2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api/client';
 import { readChatStream } from '@/lib/consultant-stream';
@@ -176,12 +184,17 @@ export function ChatScreen({
   return (
     <div className="flex h-full min-h-0 flex-col gap-6 lg:flex-row">
       {/* Las conversaciones guardadas. Segundo plano: lo primero es escribir. */}
-      <aside className="flex shrink-0 flex-col gap-2 lg:w-64">
+      <aside className="surface flex shrink-0 flex-col gap-2 p-3 lg:w-72">
         <Button type="button" variant="outline" onClick={fresh}>
           <MessageSquarePlus size={15} />
           Nueva conversación
         </Button>
 
+        {conversations.length > 0 && (
+          <p className="px-2 pt-3 pb-1 text-[0.68rem] uppercase tracking-[0.22em] text-grafito-texto">
+            Tus conversaciones
+          </p>
+        )}
         {conversations.length > 0 && (
           <ul className="flex max-h-40 flex-col gap-1 overflow-y-auto lg:max-h-none">
             {conversations.map((item) => (
@@ -195,10 +208,10 @@ export function ChatScreen({
                   type="button"
                   onClick={() => void open(item.id)}
                   aria-current={activeId === item.id ? 'true' : undefined}
-                  className={`min-w-0 flex-1 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                  className={`min-w-0 flex-1 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
                     activeId === item.id
-                      ? 'bg-nocturno text-marfil'
-                      : 'text-grafito-texto hover:bg-nocturno/60 hover:text-marfil'
+                      ? 'bg-marfil/[0.07] text-marfil'
+                      : 'text-marfil/65 hover:bg-marfil/[0.04] hover:text-marfil'
                   }`}
                 >
                   <span className="block truncate">{item.title}</span>
@@ -227,26 +240,35 @@ export function ChatScreen({
               <Tracing label="Abriendo la conversación" />
             </div>
           ) : messages.length === 0 && !streaming ? (
-            <div className="flex flex-col gap-6 py-8">
-              <div>
-                <h2 className="font-display text-2xl text-marfil">
-                  Pregúntame lo que necesites
-                </h2>
-                <p className="mt-3 max-w-xl leading-relaxed text-marfil/70">
-                  Respondo con el método de Luifer. Si no tengo un dato
-                  confirmado, te lo digo — no me lo invento.
-                </p>
+            <div className="surface-azul animate-rise flex flex-col gap-6 p-7">
+              <div className="flex items-start gap-4">
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-marfil/10 ring-1 ring-marfil/20">
+                  <MessagesSquare size={22} strokeWidth={1.8} />
+                </span>
+                <div>
+                  <h2 className="font-display text-2xl leading-tight">
+                    Pregúntame lo que necesites
+                  </h2>
+                  <p className="mt-2 max-w-xl leading-relaxed text-marfil/75">
+                    Respondo con el método de Luifer. Si no tengo un dato
+                    confirmado, te lo digo — no me lo invento.
+                  </p>
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 {ARRANQUES.map((texto) => (
                   <button
                     key={texto}
                     type="button"
                     onClick={() => void send(texto)}
-                    className="rounded-md border border-grafito/30 px-4 py-2 text-sm text-marfil/80 transition-colors hover:border-dorado hover:text-dorado"
+                    className="group flex items-start justify-between gap-3 rounded-2xl border border-marfil/15 bg-marfil/[0.07] px-4 py-3.5 text-left text-sm text-marfil/90 transition-colors hover:border-marfil/35 hover:bg-marfil/[0.12]"
                   >
                     {texto}
+                    <ArrowUpRight
+                      size={16}
+                      className="mt-0.5 shrink-0 text-marfil/50 transition-colors group-hover:text-marfil"
+                    />
                   </button>
                 ))}
               </div>
@@ -297,7 +319,12 @@ export function ChatScreen({
           </p>
         )}
 
-        <form onSubmit={submit} className="mt-4 flex items-end gap-3">
+        {/* Una sola superficie con el botón adentro: así se escribe en los
+            chats que la gente ya usa todos los días. */}
+        <form
+          onSubmit={submit}
+          className="surface mt-4 flex items-end gap-2 rounded-2xl p-2 focus-within:border-dorado/40"
+        >
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -311,11 +338,16 @@ export function ChatScreen({
             rows={2}
             placeholder="Escribe tu pregunta…"
             aria-label="Tu pregunta"
-            className="min-h-[3.25rem] flex-1 resize-none rounded-md border border-input bg-transparent px-4 py-3 text-marfil outline-none placeholder:text-grafito-texto focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="min-h-[3.25rem] flex-1 resize-none bg-transparent px-3 py-3 text-marfil outline-none placeholder:text-grafito-texto"
           />
-          <Button type="submit" disabled={busy || draft.trim().length < 2}>
-            {busy ? <Loader2 className="animate-spin" size={16} /> : <Send size={15} />}
-            Enviar
+          <Button
+            type="submit"
+            size="icon-lg"
+            disabled={busy || draft.trim().length < 2}
+            aria-label="Enviar"
+            className="size-11 rounded-xl"
+          >
+            {busy ? <Loader2 className="animate-spin" size={17} /> : <Send size={17} />}
           </Button>
         </form>
 

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil, Route } from 'lucide-react';
+import { PageHeader } from '@/components/app/page-header';
 import type { RouteOverview } from '@/lib/api/types';
 import { BlockCard } from './block-card';
 import { BuyingRange } from './buying-range';
@@ -22,28 +23,24 @@ export function RouteScreen({ initial }: { initial: RouteOverview }) {
 
   return (
     <div className="flex flex-col gap-10">
-      <header>
-        <p className="text-xs uppercase tracking-[0.24em] text-grafito-texto">
-          Qué hacer y en qué orden
-        </p>
-        <h1 className="mt-4 font-display text-3xl leading-tight text-marfil md:text-4xl">
-          Mi Ruta de 90 Días
-        </h1>
-        <p className="mt-4 max-w-2xl leading-relaxed text-marfil/70">
-          El plan del método en tres bloques de treinta días. Cada tarea dice
-          qué hacer y por qué importa.
-        </p>
+      <div className="flex flex-col gap-6">
+        <PageHeader
+          icon={Route}
+          eyebrow="Qué hacer y en qué orden"
+          title="Mi Ruta de 90 Días"
+          description="El plan del método en tres bloques de treinta días. Cada tarea dice qué hacer y por qué importa."
+        />
 
         {/* La regla crítica del método, arriba y visible. No en letra chica:
             es la promesa que más fácil se malinterpreta. */}
-        <p className="mt-5 max-w-2xl rounded-md border border-azul/40 bg-azul/10 px-4 py-3 text-sm text-marfil/85">
+        <p className="max-w-2xl rounded-2xl border border-azul/40 bg-azul/10 px-5 py-4 text-sm leading-relaxed text-marfil/85">
           <span className="text-marfil">
             90 días no significa una compra garantizada en 90 días.
           </span>{' '}
           La meta es que al final puedas aprobar, rechazar o seguir investigando
           una oportunidad con criterio propio. Rechazar también cuenta.
         </p>
-      </header>
+      </div>
 
       {!overview.started || editing ? (
         <StartingPointForm

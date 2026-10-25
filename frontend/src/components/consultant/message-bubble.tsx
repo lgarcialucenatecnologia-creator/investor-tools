@@ -20,12 +20,20 @@ export function MessageBubble({
   const mine = author === 'person';
 
   return (
-    <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex items-end gap-3 ${mine ? 'justify-end' : 'justify-start'}`}>
+      {!mine && (
+        <span
+          aria-hidden="true"
+          className="surface-azul grid size-8 shrink-0 place-items-center rounded-full font-display text-sm"
+        >
+          L
+        </span>
+      )}
       <div
-        className={`max-w-[min(46rem,88%)] rounded-lg px-5 py-3.5 leading-relaxed ${
+        className={`max-w-[min(46rem,85%)] px-5 py-3.5 leading-relaxed ${
           mine
-            ? 'bg-nocturno text-marfil'
-            : 'border border-azul/30 bg-azul/10 text-marfil/90'
+            ? 'rounded-2xl rounded-br-md bg-dorado/[0.12] text-marfil ring-1 ring-dorado/25'
+            : 'surface rounded-2xl rounded-bl-md text-marfil/90'
         }`}
       >
         <p className="whitespace-pre-wrap">

@@ -24,14 +24,12 @@ export type Evidence =
   | 'punto-de-partida'
   /** Tiene su rango de compra, sin alertas críticas. */
   | 'rango-limpio'
-  /** Guardó al menos una evaluación en el Filtro de Seguridad. */
-  | 'filtro-alguna'
-  /** Alguna evaluación con comparables de la zona. */
-  | 'filtro-comparables'
-  /** Alguna evaluación con precio máximo calculado. */
-  | 'filtro-precio-maximo'
-  /** Alguna evaluación cerrada con veredicto, verde o rojo. */
-  | 'filtro-decidida';
+  /** Guardó al menos un proyecto en el Check List. */
+  | 'checklist-alguno'
+  /** Algún proyecto con el precio por m² de la zona calificado. */
+  | 'checklist-mercado'
+  /** Algún proyecto cerrado con veredicto: sólido, débil o no pasa. */
+  | 'checklist-decidido';
 
 export interface Task {
   id: string;
@@ -96,9 +94,9 @@ export const BLOCKS: Block[] = [
       },
       {
         id: 'filtrar',
-        label: 'Pasa tu primera propiedad por el Filtro de Seguridad',
+        label: 'Evalúa tu primera propiedad en el Check List',
         why: 'Filtrar es descartar rápido lo que no cumple, antes de dedicarle horas.',
-        evidence: 'filtro-alguna',
+        evidence: 'checklist-alguno',
       },
     ],
   },
@@ -116,7 +114,7 @@ export const BLOCKS: Block[] = [
         id: 'comparables',
         label: 'Construye comparables de la zona para una propiedad',
         why: 'El precio publicado no es el valor. El valor justificable se defiende con comparables y ajustes.',
-        evidence: 'filtro-comparables',
+        evidence: 'checklist-mercado',
       },
       {
         id: 'costos',
@@ -133,7 +131,6 @@ export const BLOCKS: Block[] = [
         id: 'maximo',
         label: 'Calcula tu precio máximo antes de hablar con nadie',
         why: 'Nunca se construye una oferta sin haber definido primero el límite. Es la regla del Módulo 8.',
-        evidence: 'filtro-precio-maximo',
       },
       {
         id: 'salida',
@@ -181,7 +178,7 @@ export const BLOCKS: Block[] = [
         id: 'decision',
         label: 'Cierra el expediente: avanza, investiga más, negocia o rechaza',
         why: 'Es el resultado verificable del método. Cuatro salidas posibles, todas legítimas.',
-        evidence: 'filtro-decidida',
+        evidence: 'checklist-decidido',
       },
     ],
   },

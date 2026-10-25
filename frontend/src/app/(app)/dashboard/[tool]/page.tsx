@@ -60,7 +60,7 @@ export default async function ToolPage({
       {/* Mientras no calcule nada, la vista dice con precisión qué va a
           hacer. Una pantalla vacía con «próximamente» no le sirve a nadie;
           esto sí, porque el cliente sabe qué está esperando. */}
-      <section className="rounded-lg border border-grafito/20 bg-nocturno p-7">
+      <section className="surface p-7">
         <h2 className="font-display text-xl text-marfil">
           {tool.ready ? 'Qué encuentras aquí' : 'Qué vas a encontrar aquí'}
         </h2>

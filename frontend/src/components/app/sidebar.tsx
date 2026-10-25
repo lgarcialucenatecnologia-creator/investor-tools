@@ -2,60 +2,85 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Settings2 } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings2 } from 'lucide-react';
 import { useSession } from '@/hooks/use-session';
 import { TOOLS } from '@/lib/tools';
+import { BrandMark, initialsOf } from './brand-mark';
 
+const ITEMS = [
+  {
+    href: '/dashboard',
+    label: 'Inicio',
+    tagline: 'Tu panorama',
+    icon: LayoutDashboard,
+  },
+  ...TOOLS.map((tool) => ({
+    href: `/dashboard/${tool.slug}`,
+    label: tool.name,
+    tagline: tool.tagline,
+    icon: tool.icon,
+  })),
+];
+
+export function isActive(pathname: string, href: string) {
+  return href === '/dashboard'
+    ? pathname === '/dashboard'
+    : pathname.startsWith(href);
+}
+
+/** Solo escritorio: en pantalla angosta la navegación vive en `MobileBar`. */
 export function Sidebar() {
   const { user, logout } = useSession();
   const pathname = usePathname();
 
-  const items = [
-    { href: '/dashboard', label: 'Inicio', tagline: 'Dónde estás parado' },
-    ...TOOLS.map((tool) => ({
-      href: `/dashboard/${tool.slug}`,
-      label: tool.name,
-      tagline: tool.tagline,
-    })),
-  ];
-
   return (
     <nav
       aria-label="Herramientas"
-      className="flex shrink-0 flex-col border-b border-grafito/20 bg-nocturno lg:h-full lg:w-[17rem] lg:border-b-0 lg:border-r"
+      className="hidden shrink-0 flex-col border-r border-marfil/[0.06] bg-obsidiana/50 backdrop-blur-xl lg:flex lg:h-full lg:w-[17.5rem]"
     >
-      <Link
-        href="/dashboard"
-        className="hidden px-6 py-7 font-display text-lg leading-tight tracking-tight text-marfil lg:block"
-      >
-        Pensionate con
-        <br />
-        Bienes Raíces
+      <Link href="/dashboard" className="px-6 pt-7 pb-8">
+        <BrandMark />
       </Link>
 
-      {/* En pantalla angosta el menú se vuelve una fila que se desliza: un
-          cajón desplegable sería más máquina para el mismo resultado. */}
-      <ul className="flex gap-1 overflow-x-auto px-3 py-3 lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-y-auto lg:overflow-x-visible lg:px-3 lg:py-0">
-        {items.map((item) => {
-          const active =
-            item.href === '/dashboard'
-              ? pathname === '/dashboard'
-              : pathname.startsWith(item.href);
-
+      <p className="px-6 pb-2 text-[0.68rem] uppercase tracking-[0.22em] text-grafito-texto">
+        Herramientas
+      </p>
+      <ul className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3">
+        {ITEMS.map((item) => {
+          const active = isActive(pathname, item.href);
+          const Icon = item.icon;
           return (
-            <li key={item.href} className="shrink-0 lg:shrink">
+            <li key={item.href}>
               <Link
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={`block whitespace-nowrap rounded-md px-4 py-3 transition-colors lg:whitespace-normal ${
+                className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors ${
                   active
-                    ? 'bg-obsidiana text-marfil'
-                    : 'text-marfil/70 hover:bg-obsidiana/60 hover:text-marfil'
+                    ? 'bg-marfil/[0.06] text-marfil'
+                    : 'text-marfil/65 hover:bg-marfil/[0.04] hover:text-marfil'
                 }`}
               >
-                <span className="text-sm">{item.label}</span>
-                <span className="mt-0.5 hidden text-xs text-grafito-texto lg:block">
-                  {item.tagline}
+                {/* Indicador activo: un filo dorado, no un bloque de color. */}
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-1/2 left-0 h-6 w-[3px] -translate-y-1/2 rounded-full bg-dorado transition-opacity ${
+                    active ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+                <span
+                  className={`grid size-9 shrink-0 place-items-center rounded-lg border transition-colors ${
+                    active
+                      ? 'border-dorado/40 bg-dorado/10 text-dorado'
+                      : 'border-marfil/[0.07] bg-marfil/[0.03] text-marfil/60 group-hover:text-marfil'
+                  }`}
+                >
+                  <Icon size={17} strokeWidth={1.8} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm">{item.label}</span>
+                  <span className="block truncate text-xs text-grafito-texto">
+                    {item.tagline}
+                  </span>
                 </span>
               </Link>
             </li>
@@ -63,33 +88,47 @@ export function Sidebar() {
         })}
       </ul>
 
-      <div className="hidden shrink-0 flex-col gap-1 border-t border-grafito/20 p-3 lg:flex">
+      <div className="flex shrink-0 flex-col gap-2 p-3">
         {user.role === 'admin' && (
           <Link
             href="/admin"
             aria-current={pathname.startsWith('/admin') ? 'page' : undefined}
-            className={`flex items-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${
+            className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm transition-colors ${
               pathname.startsWith('/admin')
-                ? 'bg-obsidiana text-dorado'
-                : 'text-dorado/80 hover:bg-obsidiana/60 hover:text-dorado'
+                ? 'bg-marfil/[0.06] text-dorado'
+                : 'text-dorado/80 hover:bg-marfil/[0.04] hover:text-dorado'
             }`}
           >
-            <Settings2 size={15} />
+            <Settings2 size={16} />
             Administración
           </Link>
         )}
 
-        <p className="truncate px-4 pt-2 text-xs text-grafito-texto">
-          {user.email}
-        </p>
-        <button
-          type="button"
-          onClick={() => void logout()}
-          className="flex items-center gap-2 rounded-md px-4 py-2.5 text-sm text-grafito-texto transition-colors hover:bg-obsidiana/60 hover:text-marfil"
-        >
-          <LogOut size={15} />
-          Cerrar sesión
-        </button>
+        <div className="surface flex items-center gap-3 rounded-2xl p-3">
+          <span
+            aria-hidden="true"
+            className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-nocturno to-azul text-xs font-medium text-marfil ring-1 ring-marfil/15"
+          >
+            {initialsOf(user.fullName ?? '', user.email)}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm text-marfil">
+              {user.fullName || user.email.split('@')[0]}
+            </span>
+            <span className="block truncate text-xs text-grafito-texto">
+              {user.email}
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={() => void logout()}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+            className="grid size-8 shrink-0 place-items-center rounded-lg text-grafito-texto transition-colors hover:bg-marfil/[0.06] hover:text-marfil"
+          >
+            <LogOut size={15} />
+          </button>
+        </div>
       </div>
     </nav>
   );

@@ -15,7 +15,7 @@ export interface PromptInput {
   firstName: string;
   /** El método, ya transcrito. Va aparte cuando viaja por caché. */
   knowledge?: string;
-  /** Sus propias evaluaciones del Filtro de Seguridad. */
+  /** Sus propios proyectos del Check List. */
   ownData: string | null;
   /** Datos que cambian: precio, horarios, bonos. Vacío mientras no existan. */
   dynamicFacts: string | null;

@@ -17,7 +17,7 @@
 
   /* --- Dorado (15%) — reservado para valor real: CTAs y resultados --- */
   --color-dorado: #d7a72e; /* Dorado Inversión — títulos, CTAs */
-  --color-oro: #f2c85b; /* Oro Luminoso — SOLO el resultado clave (el Índice) */
+  --color-oro: #f2c85b; /* Oro Luminoso — SOLO el resultado clave */
 
   /* --- Texto (20%) --- */
   --color-marfil: #f4f1eb; /* Blanco Marfil — copy largo. NUNCA blanco puro */
@@ -47,7 +47,7 @@
 /* ------------------------------------------------------------
    Contrastes verificados sobre Negro Obsidiana (#0C0812):
      marfil          17.0:1  ✓ AAA   texto largo
-     oro             12.0:1  ✓ AAA   resultado del Índice
+     oro             12.0:1  ✓ AAA   resultado clave
      dorado           8.9:1  ✓ AAA   títulos y CTAs
      alerta           6.4:1  ✓ AA    mensajes de error
      grafito-texto    4.9:1  ✓ AA    metadata y fechas
@@ -153,7 +153,7 @@
   --input: rgb(116 112 120 / 45%);
   --ring: var(--color-dorado);
 
-  /* Gráficas derivadas de la marca — provisional hasta definir el Índice. */
+  /* Gráficas derivadas de la marca. */
   --chart-1: var(--color-dorado);
   --chart-2: var(--color-azul);
   --chart-3: var(--color-oro);
@@ -190,6 +190,136 @@
    ============================================================ */
 body:has(.app-shell) {
   overflow: hidden;
+}
+
+/* ============================================================
+   Panel · profundidad y superficies
+
+   Lo plano se lee como «sin terminar». La profundidad sale de luz, no de
+   decoración: tres halos muy tenues en el fondo (violeta, dorado, azul),
+   superficies con un borde de 1px y un filo de luz arriba, y una sola
+   superficie de acento por vista. Nada parpadea ni se mueve en bucle: la
+   marca vende tranquilidad, no adrenalina.
+   ============================================================ */
+.app-shell {
+  background:
+    radial-gradient(
+      60rem 40rem at 0% 0%,
+      color-mix(in oklch, var(--color-nocturno) 85%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(
+      48rem 32rem at 100% 0%,
+      color-mix(in oklch, var(--color-dorado) 8%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      44rem 30rem at 60% 110%,
+      color-mix(in oklch, var(--color-azul) 14%, transparent),
+      transparent 60%
+    ),
+    var(--color-obsidiana);
+}
+
+/* Superficie base: tarjetas, paneles, celdas del bento. */
+@utility surface {
+  position: relative;
+  border-radius: 1.5rem;
+  border: 1px solid color-mix(in oklch, var(--color-marfil) 8%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--color-nocturno) 88%, var(--color-marfil) 3%) 0%,
+    color-mix(in oklch, var(--color-nocturno) 55%, var(--color-obsidiana)) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, var(--color-marfil) 7%, transparent),
+    0 24px 48px -28px rgb(0 0 0 / 0.7);
+}
+
+/* Superficie que se puede pulsar: se levanta y toma el filo dorado. */
+@utility surface-link {
+  transition:
+    transform 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+  &:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklch, var(--color-dorado) 35%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, var(--color-marfil) 9%, transparent),
+      0 28px 56px -28px color-mix(in oklch, var(--color-dorado) 30%, black);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--color-dorado);
+    outline-offset: 3px;
+  }
+}
+
+/* El resultado clave de la vista. Una por pantalla, nunca más. */
+@utility surface-gold {
+  position: relative;
+  border-radius: 1.5rem;
+  color: var(--color-obsidiana);
+  background:
+    radial-gradient(
+      28rem 18rem at 100% 0%,
+      color-mix(in oklch, var(--color-oro) 70%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      150deg,
+      var(--color-oro) 0%,
+      var(--color-dorado) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 45%, transparent),
+    0 30px 60px -30px color-mix(in oklch, var(--color-dorado) 60%, black);
+}
+
+/* El Consultor Luifer lleva el azul de marca. */
+@utility surface-azul {
+  position: relative;
+  border-radius: 1.5rem;
+  color: var(--color-marfil);
+  border: 1px solid color-mix(in oklch, var(--color-azul) 60%, var(--color-marfil) 10%);
+  background:
+    radial-gradient(
+      26rem 16rem at 0% 0%,
+      color-mix(in oklch, var(--color-azul) 85%, var(--color-marfil) 8%),
+      transparent 70%
+    ),
+    linear-gradient(
+      160deg,
+      var(--color-azul) 0%,
+      color-mix(in oklch, var(--color-azul) 55%, var(--color-obsidiana)) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, var(--color-marfil) 18%, transparent),
+    0 30px 60px -30px color-mix(in oklch, var(--color-azul) 70%, black);
+}
+
+/* Entrada escalonada: se usa con `style={{ '--d': '120ms' }}`. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@utility animate-rise {
+  animation: rise 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise {
+    animation: none;
+  }
+  .surface-link:hover {
+    transform: none;
+  }
 }
 
 /* Selección de texto en dorado, coherente con la identidad */
